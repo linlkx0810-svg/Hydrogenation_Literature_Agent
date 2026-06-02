@@ -1,0 +1,41 @@
+MIT License
+
+Copyright (c) 2025
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## PDF Access and Publisher Copyright Notice
+
+This software does **not** distribute, embed, or reproduce any copyrighted
+journal articles or PDF documents. The PDF download module (`modules/pdf_download.py`)
+only retrieves documents that are:
+
+1. Available under open-access (OA) licences through public APIs
+   (OpenAlex OA locations, Unpaywall, Crossref), or
+2. Accessed by the end user through their own valid institutional subscription
+   via the browser-mode module, which requires the user to complete
+   authentication steps manually.
+
+Users are solely responsible for ensuring that their access to and use of
+any retrieved documents complies with the applicable publisher terms of
+service, copyright law, and their institution's licensing agreements.
+
+The authors of this software accept no liability for any misuse.

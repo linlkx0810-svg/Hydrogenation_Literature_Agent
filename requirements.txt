@@ -1,0 +1,13 @@
+# ── Core pipeline ─────────────────────────────────────────────────────────────
+openpyxl>=3.1,<4          # Excel read/write
+pypdf>=5,<7               # PDF text extraction
+requests>=2.31,<3         # HTTP requests to APIs
+pandas>=2.0,<4            # DataFrame I/O for log files
+PyYAML>=6.0,<7            # YAML config parsing
+
+# ── Browser PDF download (optional — only needed for run_download.bat --browser)
+playwright>=1.40,<2       # Playwright browser automation
+
+# ── Optional API performance
+# Uncomment if you have API keys:
+# httpx>=0.27              # Faster HTTP client (drop-in requests replacement)

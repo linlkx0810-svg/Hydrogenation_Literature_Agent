@@ -1,0 +1,63 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Ni_H2_asymmetric_hydrogenation.yaml
+# Configuration for nickel-catalyzed asymmetric H2 hydrogenation.
+# ─────────────────────────────────────────────────────────────────────────────
+
+metal:
+  name: Nickel
+  symbol: Ni
+  aliases:
+    - nickel
+    - ni
+    - "nickel(ii)"
+    - "nickel(0)"
+    - "ni(ii)"
+    - "ni(0)"
+  regex: '\b(?:nickel(?:\(ii\)|\(0\))?|ni(?:\(ii\)|\(0\))?)\b'
+
+project:
+  name: Ni_H2_Asymmetric_Hydrogenation
+  description: >
+    Systematic literature mapping of nickel-catalyzed asymmetric molecular-H2
+    hydrogenation. Covers enantioselective reactions using Ni complexes and
+    chiral ligands with H2 as the sole reductant.
+
+output:
+  prefix: Ni_H2
+  master_excel: Ni_H2_Master_Literature.xlsx
+  screened_excel: Ni_H2_Title_Abstract_Screened.xlsx
+  strict_h2_excel: Ni_H2_Strict_H2_Only.xlsx
+  fulltext_excel: Ni_H2_Fulltext_Screening.xlsx
+  extraction_excel: Ni_H2_Reaction_Data.xlsx
+  download_log_excel: Ni_H2_Download_Log.xlsx
+  data_subdir: data/Ni_H2
+
+search:
+  query_groups:
+    "A. Direct Ni asymmetric hydrogenation":
+      - "nickel-catalyzed asymmetric hydrogenation"
+      - "nickel-catalysed asymmetric hydrogenation"
+      - "Ni-catalyzed asymmetric hydrogenation"
+      - "Ni-catalysed asymmetric hydrogenation"
+    "B. Enantioselective wording":
+      - "nickel-catalyzed enantioselective hydrogenation"
+      - "Ni-catalyzed enantioselective hydrogenation"
+      - "chiral nickel catalyst hydrogenation"
+      - "nickel catalyst enantioselective hydrogenation H2"
+    "C. Molecular hydrogen restriction":
+      - "nickel asymmetric hydrogenation molecular hydrogen"
+      - "Ni asymmetric hydrogenation H2"
+      - "nickel catalyst molecular hydrogen enantioselective"
+      - "nickel hydrogenation ee H2"
+    "D. Review discovery":
+      - "review nickel asymmetric hydrogenation"
+      - "review nickel-catalyzed enantioselective hydrogenation"
+      - "base metal asymmetric hydrogenation nickel review"
+      - "earth-abundant metal nickel asymmetric hydrogenation"
+
+screening:
+  metal_exclusion_terms: []
+  other_metal_regex: >
+    \b(?:iron|fe[-\s]?catalyzed|ruthenium|ru[-\s]?catalyzed|iridium|
+    ir[-\s]?catalyzed|rhodium|rh[-\s]?catalyzed|cobalt|co[-\s]?catalyzed|
+    manganese|mn[-\s]?catalyzed|palladium|pd[-\s]?catalyzed)\b

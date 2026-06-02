@@ -1,0 +1,63 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Mn_H2_asymmetric_hydrogenation.yaml
+# Configuration for manganese-catalyzed asymmetric H2 hydrogenation.
+# ─────────────────────────────────────────────────────────────────────────────
+
+metal:
+  name: Manganese
+  symbol: Mn
+  aliases:
+    - manganese
+    - mn
+    - "manganese(ii)"
+    - "manganese(iii)"
+    - "mn(ii)"
+    - "mn(iii)"
+  regex: '\b(?:manganese(?:\(ii\)|\(iii\))?|mn(?:\(ii\)|\(iii\))?)\b'
+
+project:
+  name: Mn_H2_Asymmetric_Hydrogenation
+  description: >
+    Systematic literature mapping of manganese-catalyzed asymmetric molecular-H2
+    hydrogenation. Covers enantioselective reactions using Mn complexes and
+    chiral ligands with H2 as the sole reductant.
+
+output:
+  prefix: Mn_H2
+  master_excel: Mn_H2_Master_Literature.xlsx
+  screened_excel: Mn_H2_Title_Abstract_Screened.xlsx
+  strict_h2_excel: Mn_H2_Strict_H2_Only.xlsx
+  fulltext_excel: Mn_H2_Fulltext_Screening.xlsx
+  extraction_excel: Mn_H2_Reaction_Data.xlsx
+  download_log_excel: Mn_H2_Download_Log.xlsx
+  data_subdir: data/Mn_H2
+
+search:
+  query_groups:
+    "A. Direct Mn asymmetric hydrogenation":
+      - "manganese-catalyzed asymmetric hydrogenation"
+      - "manganese-catalysed asymmetric hydrogenation"
+      - "Mn-catalyzed asymmetric hydrogenation"
+      - "Mn-catalysed asymmetric hydrogenation"
+    "B. Enantioselective wording":
+      - "manganese-catalyzed enantioselective hydrogenation"
+      - "Mn-catalyzed enantioselective hydrogenation"
+      - "chiral manganese catalyst hydrogenation"
+      - "manganese catalyst enantioselective hydrogenation H2"
+    "C. Molecular hydrogen restriction":
+      - "manganese asymmetric hydrogenation molecular hydrogen"
+      - "Mn asymmetric hydrogenation H2"
+      - "manganese catalyst molecular hydrogen enantioselective"
+      - "manganese hydrogenation ee H2"
+    "D. Review discovery":
+      - "review manganese asymmetric hydrogenation"
+      - "review manganese-catalyzed enantioselective hydrogenation"
+      - "base metal asymmetric hydrogenation manganese review"
+      - "earth-abundant metal manganese asymmetric hydrogenation"
+
+screening:
+  metal_exclusion_terms: []
+  other_metal_regex: >
+    \b(?:iron|fe[-\s]?catalyzed|ruthenium|ru[-\s]?catalyzed|iridium|
+    ir[-\s]?catalyzed|rhodium|rh[-\s]?catalyzed|cobalt|co[-\s]?catalyzed|
+    nickel|ni[-\s]?catalyzed|palladium|pd[-\s]?catalyzed)\b

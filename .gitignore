@@ -1,0 +1,53 @@
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Virtual environment ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Credentials & secrets ────────────────────────────────────────────────────
+.env
+*.env
+storage_state.json
+
+# ── Generated outputs (not committed — too large, user-specific) ─────────────
+outputs/
+data/
+papers/
+logs/
+
+# ── Runtime state ────────────────────────────────────────────────────────────
+PROJECT_STATE.json
+
+# ── PDFs (copyright — never commit) ─────────────────────────────────────────
+*.pdf
+
+# ── Excel result files ───────────────────────────────────────────────────────
+*.xlsx
+*.xls
+
+# ── Browser session cache ────────────────────────────────────────────────────
+.cache/
+hla_browser_session/
+playwright_session/
+
+# ── OS noise ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo

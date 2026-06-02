@@ -1,0 +1,73 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# base_config.yaml
+# Shared defaults for all Hydrogenation Literature Agent runs.
+# Metal-specific configs inherit and override these values.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Search parameters ────────────────────────────────────────────────────────
+search:
+  per_query: 12          # Results to request per query per source
+  max_reviews: 12        # Review papers used for reference-list mining
+  max_primary: 12        # Primary papers used for forward/backward citation chasing
+  sources:
+    - openalex
+    - crossref
+    - semantic_scholar
+  openalex_email: ""     # Set via env OPENALEX_EMAIL or here for polite pool
+  semantic_scholar_api_key: ""  # Set via env SEMANTIC_SCHOLAR_API_KEY
+
+# ── Screening parameters ─────────────────────────────────────────────────────
+screening:
+  title_threshold: 0.94  # Fuzzy-title deduplication threshold (0–1)
+  # Universal exclusion terms (apply to all metals)
+  universal_exclusion_terms:
+    - transfer hydrogenation
+    - hydrosilylation
+    - hydroboration
+    - borrowing hydrogen
+    - photocatal
+    - electrocatal
+    - density functional theory
+
+# ── PDF download parameters ──────────────────────────────────────────────────
+pdf_download:
+  min_pdf_bytes: 15000
+  delay_after_load: 3.0
+  delay_after_click: 3.0
+  delay_after_manual: 4.0
+  inter_paper_delay: 5.0
+  system_chrome_windows: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+  browser_session_dir: "~/.cache/hla_browser_session"
+
+# ── Output parameters ────────────────────────────────────────────────────────
+output:
+  outputs_dir: "outputs"
+  papers_api_dir: "papers/api_oa"
+  papers_manual_dir: "papers/manual_access"
+  logs_dir: "outputs/logs"
+
+# ── Reaction data extraction columns ─────────────────────────────────────────
+extraction:
+  columns:
+    - DOI
+    - Title
+    - Authors
+    - Year
+    - Journal
+    - Metal_catalyst
+    - Ligand
+    - Substrate_class
+    - Substrate_example
+    - Product
+    - ee_percent
+    - yield_percent
+    - H2_pressure_bar
+    - Temperature_C
+    - Solvent
+    - Reaction_time_h
+    - TON
+    - TOF
+    - Notes
+    - Evidence_sentence
+    - Page_number
+    - PDF_path

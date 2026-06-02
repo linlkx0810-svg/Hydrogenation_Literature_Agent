@@ -1,0 +1,64 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# config_template.yaml
+# Copy this file to config/<Metal>_H2_asymmetric_hydrogenation.yaml
+# and fill in the metal-specific values below.
+# ─────────────────────────────────────────────────────────────────────────────
+
+metal:
+  name: METAL_NAME            # e.g. Iron, Cobalt, Manganese, Nickel
+  symbol: SYMBOL              # e.g. Fe, Co, Mn, Ni
+  aliases:
+    - metal_name_lowercase    # e.g. iron
+    - symbol_lowercase        # e.g. fe
+    - "metal(ii)"
+    - "metal(iii)"
+    - "symbol(ii)"
+    - "symbol(iii)"
+  # Python re pattern for metal detection in text
+  regex: '\b(?:metal_name|symbol(?:\(ii\)|\(iii\))?)\b'
+
+project:
+  name: METAL_H2_Asymmetric_Hydrogenation
+  description: >
+    Systematic literature mapping of METAL-catalyzed asymmetric molecular-H2
+    hydrogenation. Replace this description with a project-specific summary.
+
+output:
+  prefix: METAL_H2
+  master_excel:    METAL_H2_Master_Literature.xlsx
+  screened_excel:  METAL_H2_Title_Abstract_Screened.xlsx
+  strict_h2_excel: METAL_H2_Strict_H2_Only.xlsx
+  fulltext_excel:  METAL_H2_Fulltext_Screening.xlsx
+  extraction_excel: METAL_H2_Reaction_Data.xlsx
+  download_log_excel: METAL_H2_Download_Log.xlsx
+  data_subdir: data/METAL_H2
+
+search:
+  query_groups:
+    "A. Direct METAL asymmetric hydrogenation":
+      - "METAL-catalyzed asymmetric hydrogenation"
+      - "METAL-catalysed asymmetric hydrogenation"
+      - "SYMBOL-catalyzed asymmetric hydrogenation"
+      - "SYMBOL-catalysed asymmetric hydrogenation"
+    "B. Enantioselective wording":
+      - "METAL-catalyzed enantioselective hydrogenation"
+      - "SYMBOL-catalyzed enantioselective hydrogenation"
+      - "chiral METAL catalyst hydrogenation"
+      - "METAL catalyst enantioselective hydrogenation H2"
+    "C. Molecular hydrogen restriction":
+      - "METAL asymmetric hydrogenation molecular hydrogen"
+      - "SYMBOL asymmetric hydrogenation H2"
+      - "METAL catalyst molecular hydrogen enantioselective"
+      - "METAL hydrogenation ee H2"
+    "D. Review discovery":
+      - "review METAL asymmetric hydrogenation"
+      - "review METAL-catalyzed enantioselective hydrogenation"
+      - "base metal asymmetric hydrogenation METAL review"
+      - "earth-abundant metal METAL asymmetric hydrogenation"
+
+screening:
+  # Additional metal-specific exclusion terms (complement universal list)
+  metal_exclusion_terms: []
+  # Regex to detect papers about OTHER metals (to filter false positives)
+  other_metal_regex: >
+    \b(?:iron|ruthenium|iridium|rhodium|palladium|OTHER_METAL_LIST)\b

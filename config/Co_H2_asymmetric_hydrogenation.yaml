@@ -1,0 +1,63 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Co_H2_asymmetric_hydrogenation.yaml
+# Configuration for cobalt-catalyzed asymmetric H2 hydrogenation.
+# ─────────────────────────────────────────────────────────────────────────────
+
+metal:
+  name: Cobalt
+  symbol: Co
+  aliases:
+    - cobalt
+    - co
+    - "cobalt(ii)"
+    - "cobalt(iii)"
+    - "co(ii)"
+    - "co(iii)"
+  regex: '\b(?:cobalt(?:\(ii\)|\(iii\))?|co(?:\(ii\)|\(iii\))?)\b'
+
+project:
+  name: Co_H2_Asymmetric_Hydrogenation
+  description: >
+    Systematic literature mapping of cobalt-catalyzed asymmetric molecular-H2
+    hydrogenation. Covers enantioselective reactions using Co complexes and
+    chiral ligands with H2 as the sole reductant.
+
+output:
+  prefix: Co_H2
+  master_excel: Co_H2_Master_Literature.xlsx
+  screened_excel: Co_H2_Title_Abstract_Screened.xlsx
+  strict_h2_excel: Co_H2_Strict_H2_Only.xlsx
+  fulltext_excel: Co_H2_Fulltext_Screening.xlsx
+  extraction_excel: Co_H2_Reaction_Data.xlsx
+  download_log_excel: Co_H2_Download_Log.xlsx
+  data_subdir: data/Co_H2
+
+search:
+  query_groups:
+    "A. Direct Co asymmetric hydrogenation":
+      - "cobalt-catalyzed asymmetric hydrogenation"
+      - "cobalt-catalysed asymmetric hydrogenation"
+      - "Co-catalyzed asymmetric hydrogenation"
+      - "Co-catalysed asymmetric hydrogenation"
+    "B. Enantioselective wording":
+      - "cobalt-catalyzed enantioselective hydrogenation"
+      - "Co-catalyzed enantioselective hydrogenation"
+      - "chiral cobalt catalyst hydrogenation"
+      - "cobalt catalyst enantioselective hydrogenation H2"
+    "C. Molecular hydrogen restriction":
+      - "cobalt asymmetric hydrogenation molecular hydrogen"
+      - "Co asymmetric hydrogenation H2"
+      - "cobalt catalyst molecular hydrogen enantioselective"
+      - "cobalt hydrogenation ee H2"
+    "D. Review discovery":
+      - "review cobalt asymmetric hydrogenation"
+      - "review cobalt-catalyzed enantioselective hydrogenation"
+      - "base metal asymmetric hydrogenation cobalt review"
+      - "earth-abundant metal cobalt asymmetric hydrogenation"
+
+screening:
+  metal_exclusion_terms: []
+  other_metal_regex: >
+    \b(?:iron|fe[-\s]?catalyzed|ruthenium|ru[-\s]?catalyzed|iridium|
+    ir[-\s]?catalyzed|rhodium|rh[-\s]?catalyzed|nickel|ni[-\s]?catalyzed|
+    manganese|mn[-\s]?catalyzed|palladium|pd[-\s]?catalyzed)\b
