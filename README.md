@@ -1,6 +1,6 @@
 # Hydrogenation Literature Agent
 
-> **Automated systematic-review pipeline for base-metal H₂ asymmetric hydrogenation — multi-source API search, rule-based screening, and structured catalytic data extraction. Architected for LLM integration.**
+> **Semi-automated systematic-review pipeline for base-metal H₂ asymmetric hydrogenation — multi-source API search, rule-based screening, and structured catalytic data extraction. Architected for LLM integration.**
 
 A modular, config-driven pipeline for systematic literature mapping of
 **base-metal-catalyzed asymmetric molecular-H₂ hydrogenation**.
@@ -17,7 +17,7 @@ literature, earth-abundant base metals (Fe, Co, Mn, Ni) have emerged as
 sustainable alternatives — but their literature is fragmented across databases
 and often conflated with related reactions (transfer hydrogenation, hydrosilylation).
 
-This tool was built to solve a real data-collection bottleneck: **manually
+This tool was designed to address a practical data-collection bottleneck: **manually
 surveying hundreds of papers across five stages of relevance filtering to
 extract structured catalytic performance data** (ee%, yield, conditions) that
 can inform ligand design and reaction optimisation.
@@ -31,10 +31,11 @@ This project demonstrates several competencies relevant to AI-assisted scientifi
 | Capability | How it appears here |
 |------------|---------------------|
 | **Structured data extraction** | Rule-based extraction of ee%, yield, H₂ pressure, ligand identity from unstructured PDF text |
-| **Multi-source API integration** | OpenAlex, Crossref, Semantic Scholar, Unpaywall — unified under a single interface |
+| **Multi-source literature search** | OpenAlex, Crossref, and Semantic Scholar keyword search with OpenAlex citation chasing |
+| **OA PDF resolution** | OpenAlex OA locations, Crossref PDF links, and Unpaywall lookup during Stage 3 |
 | **Automated screening pipeline** | 5-stage funnel from raw search results to curated dataset |
 | **Config-driven generalisability** | YAML configuration makes the pipeline reusable for any metal/reaction system |
-| **Reproducibility engineering** | Pinned deps, JSON state persistence, resumable stages |
+| **Reproducibility engineering** | Version-constrained deps, JSON state persistence, rerunnable stages |
 | **Browser automation** | Playwright-based institutional PDF access with manual override for CAPTCHA/login |
 | **Human-in-the-loop design** | Automated extraction + explicit manual verification requirement |
 
@@ -58,7 +59,7 @@ future version (Stage 5 as a structured Claude/GPT-4o call rather than regex).
                           |
                           v
 +-----------------------------------------------------+
-|  STAGE 2 -- Title/Abstract Screening run_screening  |
+|  STAGE 2 -- Title/Abstract      run_screening.bat   |
 |  Metal regex + H2 keyword + exclusion filter        |
 |  -> confidence score -> Tier 1 / Tier 2 / H2-strict |
 |  -> data/<prefix>/strict_h2_records.json            |
@@ -74,15 +75,15 @@ future version (Stage 5 as a structured Claude/GPT-4o call rather than regex).
                           |
                           v
 +-----------------------------------------------------+
-|  STAGE 4 -- Full-Text Screening     run_extraction  |
+|  STAGE 4 -- Full-Text Screening run_extraction.bat  |
 |  pypdf text extraction + evidence classification    |
 |  -> A. Confirmed / B. Excluded / C. Uncertain       |
 +-------------------------+---------------------------+
                           |   A. Confirmed only
                           v
 +-----------------------------------------------------+
-|  STAGE 5 -- Reaction Data Extraction run_extraction |
-|  Regex-based: ee%, yield, H2 pressure, ligand...   |
+|  STAGE 5 -- Reaction Data       run_extraction.bat  |
+|  Regex-based: ee%, yield, H2 pressure, ligand...    |
 |  [!] VERIFY ALL EXTRACTED VALUES MANUALLY           |
 |  -> outputs/<prefix>_Reaction_Data.xlsx             |
 +-----------------------------------------------------+
@@ -97,10 +98,10 @@ See [`docs/methodology.md`](docs/methodology.md) for algorithm details.
 
 - **Multi-source search** — OpenAlex, Crossref, Semantic Scholar, citation chasing
 - **Configurable screening** — YAML-defined keyword groups, regex patterns, exclusion terms
-- **Dual PDF download** — open-access API mode + headful browser mode for institutional access
+- **Dual PDF download** — OA link lookup via OpenAlex, Crossref, and Unpaywall + headful browser mode for institutional access
 - **Full-text classification** — Confirmed / Excluded / Uncertain with evidence sentences
 - **Structured data extraction** — ee%, yield, pressure, temperature, solvent, TON/TOF
-- **Resumable pipeline** — each stage saves JSON state; interrupted runs continue from last success
+- **Rerunnable pipeline** — failed stages can be rerun from the previous stage's saved JSON output
 - **Four metals ready** — Fe, Co, Mn, Ni configurations included; templates for new systems
 
 ---
@@ -110,7 +111,7 @@ See [`docs/methodology.md`](docs/methodology.md) for algorithm details.
 ### 1. Clone and set up
 
 ```bat
-git clone https://github.com/YOUR_USERNAME/Hydrogenation_Literature_Agent.git
+git clone https://github.com/linlkx0810-svg/Hydrogenation_Literature_Agent.git
 cd Hydrogenation_Literature_Agent
 setup.bat
 ```
@@ -238,8 +239,9 @@ and fill in the metal name, symbol, regex, and query groups. No code changes nee
 
 ## Example Output
 
-Stage 5 produces a structured Excel file and JSON. A representative CSV sample
-is provided at [`examples/example_extraction_output.csv`](examples/example_extraction_output.csv).
+Stage 5 produces a structured Excel file and JSON. An illustrative CSV mock
+sample is provided at [`examples/example_extraction_output.csv`](examples/example_extraction_output.csv).
+It demonstrates the output format only and does not contain real extracted results.
 
 | DOI | Metal | Ligand | ee% | Yield% | H₂ (bar) | Temp (°C) | Solvent |
 |-----|-------|--------|-----|--------|----------|-----------|---------|
@@ -247,8 +249,9 @@ is provided at [`examples/example_extraction_output.csv`](examples/example_extra
 | 10.1002/anie.201912024 | Fe(OAc)₂ | Josiphos SL-J002-1 | 95.2 | 92.0 | 40 | 20 | THF |
 | 10.1039/D1SC01234A | FeBr₂ | (R,R)-Me-BPE | 88.5 | 78.0 | 60 | 30 | MeOH |
 
-> All values are illustrative examples. Extracted values must be verified
-> manually against source PDFs before scientific use.
+> All displayed values are illustrative/mock examples, not real extracted
+> results. Values produced by actual runs must be verified manually against
+> source PDFs before scientific use.
 
 ---
 
@@ -268,14 +271,13 @@ See [`docs/limitations.md`](docs/limitations.md) for full discussion.
 
 This repository contains **no PDF files** and **no copyrighted journal content**.
 
-The PDF download module retrieves only:
-1. Documents available under open-access licences via public APIs, or
-2. Documents accessed by the end user through their own valid institutional
-   subscription, via interactive browser mode.
+The PDF download module attempts to resolve open-access or publicly available
+PDF links from metadata sources. Interactive browser mode can also access
+documents through the end user's own valid institutional subscription.
 
-Users are responsible for ensuring their access and use complies with applicable
-publisher terms of service, copyright law, and their institution's licensing
-agreements. See `LICENSE` for full notice.
+Users are responsible for verifying that their access and use comply with
+applicable publisher terms of service, copyright law, and their institution's
+licensing agreements. See `LICENSE` for full notice.
 
 ---
 

@@ -4,8 +4,8 @@
 
 The Hydrogenation Literature Agent implements a five-stage, reproducible pipeline
 for systematic literature mapping of base-metal-catalyzed asymmetric molecular-H₂
-hydrogenation. Each stage is independently resumable, reproducible from its JSON
-output, and configurable via YAML.
+hydrogenation. Each stage is rerunnable from saved JSON outputs and configurable
+via YAML.
 
 ---
 
@@ -83,7 +83,7 @@ title + abstract:
 Attempts to retrieve PDFs from:
 1. OpenAlex open-access location field
 2. Unpaywall API (requires `UNPAYWALL_EMAIL`)
-3. Crossref licence/link fields
+3. Crossref PDF link metadata
 
 PDFs are validated (minimum byte size from `base_config.yaml`) and saved to
 `papers/api_oa/`.
@@ -152,11 +152,11 @@ matching on page text. Fields extracted:
 
 | Factor | Approach |
 |--------|----------|
-| Dependencies | Pinned in `requirements.txt` (major+minor version bounds) |
+| Dependencies | Version-constrained in `requirements.txt` |
 | Search state | Saved to `data/<prefix>/master_records.json` after Stage 1 |
 | Screening state | Saved to `data/<prefix>/strict_h2_records.json` after Stage 2 |
 | Run progress | `PROJECT_STATE.json` (gitignored — local only) |
 | Random seed | Not applicable — no ML components |
 
-Interrupted runs can be resumed by re-running the failed stage's BAT file.
-The pipeline reads from the last successful stage's JSON output.
+Failed stages can be rerun using the corresponding BAT file. The pipeline reads
+from the previous stage's saved JSON output.

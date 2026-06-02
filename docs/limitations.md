@@ -25,7 +25,8 @@ Stage 2. For Tier 2 papers, manual review is recommended.
 
 ## 3. Open-access PDF coverage is incomplete
 
-Stage 3 API mode can only retrieve papers with valid open-access links.
+Stage 3 API mode attempts to resolve open-access or publicly available PDF
+links exposed by metadata sources.
 Institutional access (browser mode) extends coverage but requires manual
 interaction and a valid subscription.
 

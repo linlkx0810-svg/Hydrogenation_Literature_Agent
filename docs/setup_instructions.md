@@ -16,7 +16,7 @@
 ### 1. Clone the repository
 
 ```bat
-git clone https://github.com/YOUR_USERNAME/Hydrogenation_Literature_Agent.git
+git clone https://github.com/linlkx0810-svg/Hydrogenation_Literature_Agent.git
 cd Hydrogenation_Literature_Agent
 ```
 
@@ -39,7 +39,7 @@ This will:
 ```bat
 run_search.bat
 run_screening.bat
-run_download.bat                                                   rem open-access PDFs
+run_download.bat                                                   rem API/OA PDF links
 run_download.bat config\Fe_H2_asymmetric_hydrogenation.yaml browser  rem institutional
 run_extraction.bat
 ```

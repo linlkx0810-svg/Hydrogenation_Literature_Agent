@@ -1,6 +1,6 @@
 # Release Notes
 
-## v1.0.0 — Initial Public Release (2025)
+## v1.0.0 — Initial Public Release (2026)
 
 ### Summary
 
@@ -14,12 +14,12 @@ asymmetric molecular-H₂ hydrogenation across iron (Fe), cobalt (Co), manganese
 - **5-stage pipeline**: search → screening → PDF download → full-text
   classification → reaction data extraction
 - **4 metal configurations** out of the box: Fe, Co, Mn, Ni
-- **Dual PDF download modes**: automated open-access (API) and interactive
+- **Dual PDF download modes**: automated API/OA link resolution and interactive
   browser mode for institutional access
 - **Config-driven design**: all search queries, screening parameters, and
   output naming are YAML-configurable without code changes
-- **Resumable runs**: each stage writes its output to JSON; interrupted runs
-  resume from the last successful stage
+- **Rerunnable stages**: each stage writes its output to JSON; failed stages can
+  be rerun from the previous stage's saved JSON output
 
 ### Known limitations in v1.0.0
 
@@ -38,17 +38,11 @@ asymmetric molecular-H₂ hydrogenation across iron (Fe), cobalt (Co), manganese
 | Manganese | `config/Mn_H2_asymmetric_hydrogenation.yaml` |
 | Nickel | `config/Ni_H2_asymmetric_hydrogenation.yaml` |
 
-### Verified run: Fe H₂ asymmetric hydrogenation
+### Validation status
 
-A complete pipeline run was performed for Fe-catalyzed asymmetric H₂
-hydrogenation. The run covered all five stages and produced:
-- A curated master literature list
-- Title/abstract and full-text screening results
-- Manually verified reaction data extraction for confirmed papers
-
-Results are not included in this repository (see copyright/PDF notice in
-`LICENSE`). The pipeline code and configuration are fully reproducible given
-access to the same PDFs.
+This release was checked for repository structure, documentation consistency,
+privacy safeguards, and Git-tracking safety. It does not include a real
+literature search, PDF download, or manually verified reaction-data extraction.
 
 ---
 

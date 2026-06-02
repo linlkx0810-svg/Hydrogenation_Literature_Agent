@@ -122,8 +122,8 @@
                     |    finished     |
                     |    stats        |
                     +-----------------+
-                    Interrupted runs can be resumed by re-running
-                    from the failed stage.
+                    Failed stages can be rerun from the previous
+                    stage's saved JSON output.
 ```
 
 ## Metal Configuration Summary
