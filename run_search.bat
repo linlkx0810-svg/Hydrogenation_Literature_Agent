@@ -36,6 +36,12 @@ echo.
 
 cd /d "%~dp0"
 "%PYTHON%" -m modules.literature_search --config "%CONFIG%" %PER_QUERY% %MAX_REVIEWS% %MAX_PRIMARY%
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Stage 1 failed. Check the output above for details.
+    pause
+    exit /b 1
+)
 
 echo.
 echo Stage 1 complete. Check outputs\ for results.

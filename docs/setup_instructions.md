@@ -102,7 +102,7 @@ For papers behind paywalls, use browser mode:
 run_download.bat config\Fe_H2_asymmetric_hydrogenation.yaml browser
 ```
 
-Or test a single row first:
+Or test a single row first (row numbers are 1-based):
 
 ```bat
 run_download.bat config\Fe_H2_asymmetric_hydrogenation.yaml browser 5
@@ -115,6 +115,11 @@ run_download.bat config\Fe_H2_asymmetric_hydrogenation.yaml browser 5
 4. If a **login** page appears — log in via your institutional SSO, navigate back to the article, then press ENTER.
 5. The PDF is downloaded and saved to `papers/manual_access/`.
 6. The browser session (cookies) is saved to `~/.cache/hla_browser_session/` and reused on subsequent runs.
+
+> **Security note:** This directory stores your institutional login cookies.
+> Never commit or share it — the `.gitignore` excludes it automatically.
+> Delete the directory to revoke saved sessions (e.g. when leaving an
+> institution or using a shared machine).
 
 ---
 
@@ -131,7 +136,8 @@ run_download.bat config\Fe_H2_asymmetric_hydrogenation.yaml browser 5
 
 Each stage reads from the previous stage's JSON output. If a stage fails:
 1. Check `outputs/logs/pipeline.jsonl` for error details.
-2. Re-run the failed stage's BAT file — it picks up from where it left off.
+2. Re-run the failed stage's BAT file — it re-runs that stage from scratch,
+   reading from the last successful stage's JSON output.
 
 ---
 

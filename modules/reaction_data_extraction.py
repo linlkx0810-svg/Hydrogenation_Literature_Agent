@@ -220,10 +220,14 @@ def run(cfg: dict) -> dict:
     if not columns:
         columns = list(extracted[0].keys()) if extracted else []
 
+    confirmed_columns = list(dict.fromkeys(
+        key for record in confirmed for key in record
+    )) or columns
     export_records_xlsx(
         extracted, columns, extraction_excel,
         sheet_name="reaction_data",
         extra_sheets={"all_confirmed_metadata": confirmed},
+        extra_sheet_columns={"all_confirmed_metadata": confirmed_columns},
     )
     (data_dir / "reaction_data.json").write_text(
         json.dumps(extracted, indent=2, ensure_ascii=False), encoding="utf-8"

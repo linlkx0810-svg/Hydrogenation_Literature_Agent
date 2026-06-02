@@ -19,7 +19,7 @@ from urllib.parse import quote
 from utils import (
     load_config, log_event, ProjectState, make_run_id,
     clean_text, empty_record, http_get, normalize_doi,
-    deduplicate, save_json, timestamp,
+    deduplicate, timestamp,
 )
 from utils.excel_io import export_records_xlsx
 from utils.text_utils import LITERATURE_COLUMNS
@@ -367,6 +367,7 @@ def run(cfg: dict) -> dict:
         records, LITERATURE_COLUMNS, master_excel,
         sheet_name="all_records",
         extra_sheets={"search_log": logs},
+        extra_sheet_columns={"search_log": log_columns},
     )
     (data_dir / "master_records.json").write_text(
         json.dumps(records, indent=2, ensure_ascii=False), encoding="utf-8"

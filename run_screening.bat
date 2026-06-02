@@ -24,6 +24,12 @@ echo.
 
 cd /d "%~dp0"
 "%PYTHON%" -m modules.title_abstract_screening --config "%CONFIG%"
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Stage 2 failed. Check the output above for details.
+    pause
+    exit /b 1
+)
 
 echo.
 echo Stage 2 complete. Check outputs\ for screened Excel files.

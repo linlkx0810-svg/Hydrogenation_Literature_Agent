@@ -49,6 +49,7 @@ def export_records_xlsx(
     output_path: Path,
     sheet_name: str = "records",
     extra_sheets: dict[str, list[dict]] | None = None,
+    extra_sheet_columns: dict[str, list[str]] | None = None,
 ) -> None:
     """
     Write records to a styled Excel workbook.
@@ -60,6 +61,7 @@ def export_records_xlsx(
     output_path  : destination .xlsx path
     sheet_name   : name for the main sheet
     extra_sheets : optional {sheet_name: [records]} for additional sheets
+    extra_sheet_columns : optional {sheet_name: [columns]} overrides for extra sheets
     """
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -67,16 +69,17 @@ def export_records_xlsx(
     wb = Workbook()
     wb.remove(wb.active)
 
-    def _add(name: str, rows: list[dict]) -> None:
+    def _add(name: str, rows: list[dict], sheet_columns: list[str]) -> None:
         ws = wb.create_sheet(name)
-        ws.append(columns)
+        ws.append(sheet_columns)
         for row in rows:
-            ws.append([str(row.get(c, "") or "") for c in columns])
-        _style_sheet(ws, columns, len(rows))
+            ws.append([str(row.get(c, "") or "") for c in sheet_columns])
+        _style_sheet(ws, sheet_columns, len(rows))
 
-    _add(sheet_name, records)
+    _add(sheet_name, records, columns)
     for name, rows in (extra_sheets or {}).items():
-        _add(name, rows)
+        sheet_columns = (extra_sheet_columns or {}).get(name, columns)
+        _add(name, rows, sheet_columns)
 
     wb.save(output_path)
 

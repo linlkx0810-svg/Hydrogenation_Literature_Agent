@@ -30,6 +30,12 @@ if "%2"=="browser" (
     echo.
     cd /d "%~dp0"
     "%PYTHON%" -m modules.pdf_download --config "%CONFIG%" --mode browser %ROW_ARG%
+    if errorlevel 1 (
+        echo.
+        echo [ERROR] Stage 3 (browser mode) failed. Check the output above for details.
+        pause
+        exit /b 1
+    )
 ) else (
     echo.
     echo ================================================================
@@ -40,9 +46,15 @@ if "%2"=="browser" (
     echo.
     cd /d "%~dp0"
     "%PYTHON%" -m modules.pdf_download --config "%CONFIG%" --mode api
+    if errorlevel 1 (
+        echo.
+        echo [ERROR] Stage 3 (API mode) failed. Check the output above for details.
+        pause
+        exit /b 1
+    )
 )
 
 echo.
 echo Stage 3 complete. Check papers\ for downloaded PDFs.
-echo Next step: run_screening.bat %CONFIG%  (or rerun fulltext screening)
+echo Next step: run_extraction.bat %CONFIG%
 pause

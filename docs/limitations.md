@@ -29,8 +29,9 @@ Stage 3 API mode can only retrieve papers with valid open-access links.
 Institutional access (browser mode) extends coverage but requires manual
 interaction and a valid subscription.
 
-**Mitigation:** Browser mode supports single-row testing (`run_download.bat
-[config] browser [row]`) to verify access before processing all papers.
+**Mitigation:** Browser mode supports 1-based single-row testing
+(`run_download.bat [config] browser [row]`) to verify access before processing
+all papers.
 
 ---
 

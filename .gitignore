@@ -1,4 +1,4 @@
-# ── Python ───────────────────────────────────────────────────────────────────
+# --- Python ---
 __pycache__/
 *.py[cod]
 *.pyo
@@ -9,44 +9,44 @@ dist/
 build/
 *.egg
 
-# ── Virtual environment ──────────────────────────────────────────────────────
+# --- Virtual environment ---
 .venv/
 venv/
 env/
 ENV/
 
-# ── Credentials & secrets ────────────────────────────────────────────────────
+# --- Credentials and secrets ---
 .env
 *.env
 storage_state.json
 
-# ── Generated outputs (not committed — too large, user-specific) ─────────────
+# --- Generated outputs (not committed - too large, user-specific) ---
 outputs/
 data/
 papers/
 logs/
 
-# ── Runtime state ────────────────────────────────────────────────────────────
+# --- Runtime state ---
 PROJECT_STATE.json
 
-# ── PDFs (copyright — never commit) ─────────────────────────────────────────
+# --- PDFs (copyright - never commit) ---
 *.pdf
 
-# ── Excel result files ───────────────────────────────────────────────────────
+# --- Excel result files ---
 *.xlsx
 *.xls
 
-# ── Browser session cache ────────────────────────────────────────────────────
+# --- Browser session cache ---
 .cache/
 hla_browser_session/
 playwright_session/
 
-# ── OS noise ─────────────────────────────────────────────────────────────────
+# --- OS noise ---
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# ── IDE ──────────────────────────────────────────────────────────────────────
+# --- IDE ---
 .vscode/
 .idea/
 *.swp

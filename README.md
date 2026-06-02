@@ -1,6 +1,6 @@
 # Hydrogenation Literature Agent
 
-> **AI-assisted literature mining workflow for base-metal H₂ asymmetric hydrogenation data extraction.**
+> **Automated systematic-review pipeline for base-metal H₂ asymmetric hydrogenation — multi-source API search, rule-based screening, and structured catalytic data extraction. Architected for LLM integration.**
 
 A modular, config-driven pipeline for systematic literature mapping of
 **base-metal-catalyzed asymmetric molecular-H₂ hydrogenation**.
@@ -47,42 +47,45 @@ future version (Stage 5 as a structured Claude/GPT-4o call rather than regex).
 
 ```
   config/<Metal>_H2_asymmetric_hydrogenation.yaml
-         │
-         ▼
-┌─────────────────────────────────────────────────────┐
-│  STAGE 1 — Literature Search       run_search.bat   │
-│  OpenAlex + Crossref + Semantic Scholar             │
-│  → keyword search → citation chasing → dedup        │
-│  → data/<prefix>/master_records.json                │
-└─────────────────────────┬───────────────────────────┘
-                          ▼
-┌─────────────────────────────────────────────────────┐
-│  STAGE 2 — Title/Abstract Screening run_screening   │
-│  Metal regex + H₂ keyword + exclusion filter        │
-│  → confidence score → Tier 1 / Tier 2 / H₂-strict  │
-│  → data/<prefix>/strict_h2_records.json             │
-└─────────────────────────┬───────────────────────────┘
-                          ▼
-┌─────────────────────────────────────────────────────┐
-│  STAGE 3 — PDF Download            run_download.bat │
-│  Mode A: API/OA (automated)                         │
-│  Mode B: Browser / institutional (interactive)      │
-│  → papers/api_oa/  or  papers/manual_access/        │
-└─────────────────────────┬───────────────────────────┘
-                          ▼
-┌─────────────────────────────────────────────────────┐
-│  STAGE 4 — Full-Text Screening     run_extraction   │
-│  pypdf text extraction + evidence classification    │
-│  → A. Confirmed / B. Excluded / C. Uncertain        │
-└─────────────────────────┬───────────────────────────┘
-                          │  A. Confirmed only
-                          ▼
-┌─────────────────────────────────────────────────────┐
-│  STAGE 5 — Reaction Data Extraction run_extraction  │
-│  Regex-based: ee%, yield, H₂ pressure, ligand...   │
-│  ⚠ VERIFY ALL EXTRACTED VALUES MANUALLY            │
-│  → outputs/<prefix>_Reaction_Data.xlsx              │
-└─────────────────────────────────────────────────────┘
+         |
+         v
++-----------------------------------------------------+
+|  STAGE 1 -- Literature Search       run_search.bat  |
+|  OpenAlex + Crossref + Semantic Scholar             |
+|  -> keyword search -> citation chasing -> dedup     |
+|  -> data/<prefix>/master_records.json               |
++-------------------------+---------------------------+
+                          |
+                          v
++-----------------------------------------------------+
+|  STAGE 2 -- Title/Abstract Screening run_screening  |
+|  Metal regex + H2 keyword + exclusion filter        |
+|  -> confidence score -> Tier 1 / Tier 2 / H2-strict |
+|  -> data/<prefix>/strict_h2_records.json            |
++-------------------------+---------------------------+
+                          |
+                          v
++-----------------------------------------------------+
+|  STAGE 3 -- PDF Download            run_download.bat|
+|  Mode A: API/OA (automated)                         |
+|  Mode B: Browser / institutional (interactive)      |
+|  -> papers/api_oa/  or  papers/manual_access/       |
++-------------------------+---------------------------+
+                          |
+                          v
++-----------------------------------------------------+
+|  STAGE 4 -- Full-Text Screening     run_extraction  |
+|  pypdf text extraction + evidence classification    |
+|  -> A. Confirmed / B. Excluded / C. Uncertain       |
++-------------------------+---------------------------+
+                          |   A. Confirmed only
+                          v
++-----------------------------------------------------+
+|  STAGE 5 -- Reaction Data Extraction run_extraction |
+|  Regex-based: ee%, yield, H2 pressure, ligand...   |
+|  [!] VERIFY ALL EXTRACTED VALUES MANUALLY           |
+|  -> outputs/<prefix>_Reaction_Data.xlsx             |
++-----------------------------------------------------+
 ```
 
 See [`docs/workflow_diagram.md`](docs/workflow_diagram.md) for the full annotated diagram.  
@@ -149,6 +152,11 @@ run_download.bat config\Fe_H2_asymmetric_hydrogenation.yaml browser
 A visible Chrome window opens. Complete any login / CAPTCHA / Cloudflare
 challenges manually, then press **ENTER** in the terminal to continue.
 The session is saved; subsequent runs reuse cookies.
+
+> **Security note:** The session directory (`~/.cache/hla_browser_session/`)
+> stores your institutional login cookies. Never commit or share this directory.
+> The `.gitignore` excludes it automatically. Delete the directory to revoke
+> saved sessions (e.g. when leaving an institution or sharing a machine).
 
 ### Mac / Linux
 

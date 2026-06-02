@@ -29,7 +29,7 @@ from urllib.parse import quote, urljoin
 import pandas as pd
 
 from utils import load_config, log_event, ProjectState, make_run_id
-from utils.text_utils import http_get, normalize_doi, safe_filename, timestamp, load_json
+from utils.text_utils import http_get, normalize_doi, safe_filename, timestamp, load_json, save_json
 from utils.excel_io import append_log_xlsx
 
 # Fix Windows terminal encoding
@@ -198,7 +198,9 @@ def run_api(cfg: dict) -> dict:
     for idx, record in enumerate(records, 1):
         doi   = normalize_doi(record.get("DOI"))
         title = record.get("Title", "")[:60]
-        dest  = papers_dir / safe_filename(doi.replace("/", "_"))
+        dest  = papers_dir / (
+            safe_filename(doi.replace("/", "_")) if doi else _build_filename(record)
+        )
 
         log_row = {
             "Row": idx, "DOI": doi, "Title": title,
@@ -209,10 +211,21 @@ def run_api(cfg: dict) -> dict:
 
         if dest.exists():
             log_row.update({"Status": "REUSED", "PDF_path": str(dest)})
+            record.update({
+                "PDF access status": "REUSED",
+                "PDF source": "Existing local file",
+                "PDF_path": str(dest),
+            })
             append_log_xlsx(log_row, DOWNLOAD_LOG_COLUMNS, log_excel)
             skipped += 1
             continue
 
+        record.update({
+            "PDF access status": "",
+            "PDF source": "",
+            "PDF URL": "",
+            "PDF_path": "",
+        })
         urls = []
         for fn in (_oa_urls_openalex, _oa_urls_crossref):
             try:
@@ -226,6 +239,7 @@ def run_api(cfg: dict) -> dict:
 
         if not urls:
             log_row.update({"Status": "NO_OA_URL", "Notes": "No OA PDF URL found"})
+            record["PDF access status"] = log_row["Status"]
             append_log_xlsx(log_row, DOWNLOAD_LOG_COLUMNS, log_excel)
             failed += 1
             continue
@@ -237,6 +251,12 @@ def run_api(cfg: dict) -> dict:
                 if ok:
                     log_row.update({"Status": "SUCCESS", "PDF_path": str(dest),
                                     "Notes": f"{source}: {note}"})
+                    record.update({
+                        "PDF access status": "SUCCESS",
+                        "PDF source": source,
+                        "PDF URL": url,
+                        "PDF_path": str(dest),
+                    })
                     success += 1
                     downloaded = True
                     break
@@ -246,11 +266,13 @@ def run_api(cfg: dict) -> dict:
         if not downloaded:
             log_row.update({"Status": "DOWNLOAD_FAILED",
                             "Notes": f"Tried {len(urls)} OA URLs, none succeeded"})
+            record["PDF access status"] = log_row["Status"]
             failed += 1
 
         append_log_xlsx(log_row, DOWNLOAD_LOG_COLUMNS, log_excel)
         print(f"  [{idx}/{len(records)}] {doi[:40]:<42} {log_row['Status']}")
 
+    save_json(records_path, records)
     log_event(logs_dir / "pipeline.jsonl", "pdf_api_download_complete",
               prefix=prefix, success=success, failed=failed, skipped=skipped)
     print(f"[pdf_download:api] {prefix} — success={success}, failed={failed}, reused={skipped}")
@@ -458,6 +480,7 @@ async def _process_one_browser(row_idx: int, record: dict, context,
                 header = f.read(5)
             if header == b"%PDF-":
                 log_row.update({"Status": "SUCCESS", "PDF_path": str(dest),
+                                "PDF URL": pdf_url,
                                 "Notes": f"Downloaded from {pdf_url}"})
                 print(f"    [OK] {dest.name}  ({dest.stat().st_size // 1024} KB)")
             else:
@@ -497,9 +520,11 @@ async def _browser_main(cfg: dict, row: int | None = None) -> dict:
     records = load_json(records_path, [])
 
     if row is not None:
-        to_process = [(row, records[row])]
+        if not 1 <= row <= len(records):
+            raise IndexError(f"Row must be between 1 and {len(records)}; got {row}.")
+        to_process = [(row, records[row - 1])]
     else:
-        to_process = list(enumerate(records))
+        to_process = list(enumerate(records, 1))
 
     print("=" * 65)
     print(f"  {prefix} Browser PDF Downloader")
@@ -537,6 +562,20 @@ async def _browser_main(cfg: dict, row: int | None = None) -> dict:
                 )
                 append_log_xlsx(result, DOWNLOAD_LOG_COLUMNS, log_excel)
                 if result["Status"] == "SUCCESS":
+                    record.update({
+                        "PDF access status": "SUCCESS",
+                        "PDF source": "Browser",
+                        "PDF URL": result.get("PDF URL", ""),
+                        "PDF_path": result["PDF_path"],
+                    })
+                else:
+                    record.update({
+                        "PDF access status": result["Status"],
+                        "PDF source": "",
+                        "PDF URL": "",
+                        "PDF_path": "",
+                    })
+                if result["Status"] == "SUCCESS":
                     success += 1
                     if row is None:
                         await asyncio.sleep(inter_delay)
@@ -545,6 +584,7 @@ async def _browser_main(cfg: dict, row: int | None = None) -> dict:
         finally:
             await context.close()
 
+    save_json(records_path, records)
     log_event(logs_dir / "pipeline.jsonl", "pdf_browser_download_complete",
               prefix=prefix, success=success, failed=failed)
     if row is not None:
@@ -571,7 +611,7 @@ def main() -> None:
     parser.add_argument("--mode",    choices=["api", "browser"], default="api",
                         help="api = automated OA download; browser = institutional Playwright download")
     parser.add_argument("--row",     type=int, default=None,
-                        help="Browser mode: test a single row index (default: all)")
+                        help="Browser mode: test a single 1-based row number (default: all)")
     args = parser.parse_args()
 
     cfg    = load_config(args.config)

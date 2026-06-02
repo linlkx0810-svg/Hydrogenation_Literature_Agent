@@ -24,6 +24,13 @@ echo.
 
 cd /d "%~dp0"
 "%PYTHON%" -m modules.fulltext_screening --config "%CONFIG%"
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Stage 4 failed. Stage 5 will not run.
+    echo         Check the output above for details.
+    pause
+    exit /b 1
+)
 
 echo.
 echo ================================================================
@@ -32,6 +39,12 @@ echo ================================================================
 echo.
 
 "%PYTHON%" -m modules.reaction_data_extraction --config "%CONFIG%"
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Stage 5 failed. Check the output above for details.
+    pause
+    exit /b 1
+)
 
 echo.
 echo Stages 4+5 complete. Check outputs\ for results.
