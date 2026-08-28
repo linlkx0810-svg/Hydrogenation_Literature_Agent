@@ -2,7 +2,7 @@ name: tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, agent-portfolio-upgrade]
   pull_request:
 
 jobs:
@@ -29,3 +29,9 @@ jobs:
 
       - name: Run regression tests
         run: pytest -q
+
+      - name: Run deterministic extraction benchmark
+        run: python tools/run_benchmark.py --dataset examples/benchmark_synthetic.jsonl
+
+      - name: Smoke-test unified agent CLI
+        run: python agent.py benchmark --dataset examples/benchmark_synthetic.jsonl
