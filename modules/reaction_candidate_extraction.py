@@ -41,7 +41,7 @@ LIGANDS = (
 LIGAND_RE = re.compile(r"\b(?:" + "|".join(map(re.escape, LIGANDS)) + r")\b", re.I)
 
 SUBSTRATE_RE = re.compile(
-    r"\b(?:ketone|aryl ketone|imine|alkene|olefin|aldehyde|ester|amide|"
+    r"\b(?:aryl ketone|ketone|imine|alkene|olefin|aldehyde|ester|amide|"
     r"enamide|enamine|acetophenone|quinoline|pyridine)\b",
     re.I,
 )
@@ -136,13 +136,13 @@ def _candidate_confidence(values: dict[str, object], evidence: str) -> float:
     return round(min(score, 1.0), 2)
 
 
-def extract_reaction_candidates(text: str, context_sentences: int = 1) -> list[ReactionCandidate]:
+def extract_reaction_candidates(text: str, context_sentences: int = 2) -> list[ReactionCandidate]:
     """Extract local reaction candidates from plain article text.
 
     Candidate anchors are sentences containing ee or yield. Neighboring sentences
-    are included as context so that conditions reported immediately before/after
-    the result can be associated with the same candidate. Duplicate windows are
-    removed deterministically.
+    are included as context so that catalyst identity and conditions reported
+    immediately before/after the result can be associated with the same candidate.
+    Duplicate windows are removed deterministically.
     """
     spans = _sentence_spans(text)
     if not spans:
