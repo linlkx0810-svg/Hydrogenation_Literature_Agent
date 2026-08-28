@@ -1,315 +1,194 @@
 # Hydrogenation Literature Agent
 
-> **Semi-automated systematic-review pipeline for base-metal H₂ asymmetric hydrogenation — multi-source API search, rule-based screening, and structured catalytic data extraction. Architected for LLM integration.**
+> A reproducible scientific-literature mining pipeline for base-metal H₂ asymmetric hydrogenation, with multi-source retrieval, staged screening, provenance-aware reaction extraction, benchmarking, and human verification.
 
-A modular, config-driven pipeline for systematic literature mapping of
-**base-metal-catalyzed asymmetric molecular-H₂ hydrogenation**.
-Covers iron (Fe), cobalt (Co), manganese (Mn), and nickel (Ni) catalyst systems
-out of the box — switch metals with one command.
+This repository is a research-software prototype built to turn fragmented catalysis literature into structured, reviewable reaction data. It currently supports Fe, Co, Mn, and Ni molecular-H₂ asymmetric hydrogenation through config-driven workflows.
 
----
+## Why this project exists
 
-## Motivation
+Catalysis papers report reaction conditions and performance in inconsistent formats, often across text, tables, and supporting information. A useful scientific agent therefore needs more than keyword search: it must retrieve papers, screen relevance, associate values with local reaction context, preserve evidence, expose uncertainty, and remain auditable by a chemist.
 
-Asymmetric hydrogenation is a cornerstone of pharmaceutical and fine-chemical
-synthesis. While precious-metal catalysts (Rh, Ir, Ru) dominate the established
-literature, earth-abundant base metals (Fe, Co, Mn, Ni) have emerged as
-sustainable alternatives — but their literature is fragmented across databases
-and often conflated with related reactions (transfer hydrogenation, hydrosilylation).
+This project implements that pipeline as a deterministic baseline that can later be compared with LLM-assisted extraction using the same evaluation framework.
 
-This tool was designed to address a practical data-collection bottleneck: **manually
-surveying hundreds of papers across five stages of relevance filtering to
-extract structured catalytic performance data** (ee%, yield, conditions) that
-can inform ligand design and reaction optimisation.
+## Architecture
 
----
-
-## AI / Scientific Workflow Relevance
-
-This project demonstrates several competencies relevant to AI-assisted scientific workflows:
-
-| Capability | How it appears here |
-|------------|---------------------|
-| **Structured data extraction** | Rule-based extraction of ee%, yield, H₂ pressure, ligand identity from unstructured PDF text |
-| **Multi-source literature search** | OpenAlex, Crossref, and Semantic Scholar keyword search with OpenAlex citation chasing |
-| **OA PDF resolution** | OpenAlex OA locations, Crossref PDF links, and Unpaywall lookup during Stage 3 |
-| **Automated screening pipeline** | 5-stage funnel from raw search results to curated dataset |
-| **Config-driven generalisability** | YAML configuration makes the pipeline reusable for any metal/reaction system |
-| **Reproducibility engineering** | Version-constrained deps, JSON state persistence, rerunnable stages |
-| **Browser automation** | Playwright-based institutional PDF access with manual override for CAPTCHA/login |
-| **Human-in-the-loop design** | Automated extraction + explicit manual verification requirement |
-
-This architecture is directly extensible to **LLM-assisted extraction** in a
-future version (Stage 5 as a structured Claude/GPT-4o call rather than regex).
-
----
-
-## Workflow Diagram
-
-```
-  config/<Metal>_H2_asymmetric_hydrogenation.yaml
-         |
-         v
-+-----------------------------------------------------+
-|  STAGE 1 -- Literature Search       run_search.bat  |
-|  OpenAlex + Crossref + Semantic Scholar             |
-|  -> keyword search -> citation chasing -> dedup     |
-|  -> data/<prefix>/master_records.json               |
-+-------------------------+---------------------------+
-                          |
-                          v
-+-----------------------------------------------------+
-|  STAGE 2 -- Title/Abstract      run_screening.bat   |
-|  Metal regex + H2 keyword + exclusion filter        |
-|  -> confidence score -> Tier 1 / Tier 2 / H2-strict |
-|  -> data/<prefix>/strict_h2_records.json            |
-+-------------------------+---------------------------+
-                          |
-                          v
-+-----------------------------------------------------+
-|  STAGE 3 -- PDF Download            run_download.bat|
-|  Mode A: API/OA (automated)                         |
-|  Mode B: Browser / institutional (interactive)      |
-|  -> papers/api_oa/  or  papers/manual_access/       |
-+-------------------------+---------------------------+
-                          |
-                          v
-+-----------------------------------------------------+
-|  STAGE 4 -- Full-Text Screening run_extraction.bat  |
-|  pypdf text extraction + evidence classification    |
-|  -> A. Confirmed / B. Excluded / C. Uncertain       |
-+-------------------------+---------------------------+
-                          |   A. Confirmed only
-                          v
-+-----------------------------------------------------+
-|  STAGE 5 -- Reaction Data       run_extraction.bat  |
-|  Regex-based: ee%, yield, H2 pressure, ligand...    |
-|  [!] VERIFY ALL EXTRACTED VALUES MANUALLY           |
-|  -> outputs/<prefix>_Reaction_Data.xlsx             |
-+-----------------------------------------------------+
+```text
+OpenAlex / Crossref / Semantic Scholar
+                |
+                v
+      Stage 1: retrieval + dedup
+                |
+                v
+      Stage 2: title/abstract screening
+                |
+                v
+      Stage 3: OA / user-authorised PDF access
+                |
+                v
+      Stage 4: full-text evidence screening
+                |
+                v
+      Stage 5A: paper-level extraction
+                |
+                +------------------------------+
+                v                              v
+      Stage 5B: reaction candidates     provenance + confidence
+                |                              |
+                +--------------+---------------+
+                               v
+                    human verification
+                               |
+                               v
+                    structured dataset
 ```
 
-See [`docs/workflow_diagram.md`](docs/workflow_diagram.md) for the full annotated diagram.  
-See [`docs/methodology.md`](docs/methodology.md) for algorithm details.
+The new reaction-candidate baseline avoids treating the highest ee/yield in an entire paper as a single reaction record. Instead, it anchors on local result statements, associates nearby conditions, normalises pressure units, and preserves the exact evidence window and character offsets used for extraction.
 
----
+## What is implemented
 
-## Features
+- **Multi-source retrieval** — OpenAlex, Crossref, Semantic Scholar, citation chasing
+- **Config-driven screening** — YAML-defined metal/reaction rules, exclusions, and output settings
+- **PDF acquisition workflow** — open-access resolution plus user-authorised institutional browser mode
+- **Full-text evidence classification** — Confirmed / Excluded / Uncertain
+- **Paper-level extraction** — ee, yield, pressure, temperature, solvent, time, TON/TOF
+- **Reaction-level candidate extraction** — local field association instead of global maxima
+- **Provenance** — evidence text plus source character offsets for each candidate
+- **Confidence scoring** — deterministic confidence based on co-located supporting fields
+- **Unit normalisation** — pressure converted to bar from bar/atm/psi/MPa/kPa
+- **Benchmark harness** — field-level and candidate-count evaluation
+- **Regression tests + CI** — pytest across Python 3.10–3.12 via GitHub Actions
+- **Human-in-the-loop safeguards** — extracted values are not treated as scientifically verified until checked against source material
 
-- **Multi-source search** — OpenAlex, Crossref, Semantic Scholar, citation chasing
-- **Configurable screening** — YAML-defined keyword groups, regex patterns, exclusion terms
-- **Dual PDF download** — OA link lookup via OpenAlex, Crossref, and Unpaywall + headful browser mode for institutional access
-- **Full-text classification** — Confirmed / Excluded / Uncertain with evidence sentences
-- **Structured data extraction** — ee%, yield, pressure, temperature, solvent, TON/TOF
-- **Rerunnable pipeline** — failed stages can be rerun from the previous stage's saved JSON output
-- **Four metals ready** — Fe, Co, Mn, Ni configurations included; templates for new systems
+## Reaction-level output schema
 
----
+A candidate record looks like:
 
-## Quick Start
+```json
+{
+  "candidate_id": "rxn-0001",
+  "ee_percent": 97.5,
+  "yield_percent": 93.0,
+  "h2_pressure_bar": 20.0,
+  "temperature_c": 25.0,
+  "reaction_time_h": 12.0,
+  "solvent": "THF",
+  "ligand": "BINAP",
+  "substrate_class": "aryl ketone",
+  "confidence": 0.95,
+  "evidence_text": "...",
+  "evidence_start": 1342,
+  "evidence_end": 1516,
+  "extraction_method": "rule-baseline-v1"
+}
+```
 
-### 1. Clone and set up
+The evidence fields are deliberately part of the data model: a reviewer can trace every extracted value back to the local source text used by the extractor.
+
+## Quick start
+
+### Windows
 
 ```bat
 git clone https://github.com/linlkx0810-svg/Hydrogenation_Literature_Agent.git
 cd Hydrogenation_Literature_Agent
 setup.bat
-```
 
-`setup.bat` creates a `.venv`, installs dependencies, installs Playwright Chromium,
-and creates the required output directories.
-
-### 2. Configure API credentials (optional but recommended)
-
-```bat
-copy .env.example .env
-rem Edit .env with your email and API keys — improves rate limits and OA coverage
-```
-
-### 3. Run the full pipeline (Fe, default)
-
-```bat
 run_search.bat
 run_screening.bat
 run_download.bat
 run_extraction.bat
 ```
 
-### 4. Switch to a different metal
+### macOS / Linux
 
-```bat
-run_search.bat      config\Co_H2_asymmetric_hydrogenation.yaml
-run_screening.bat   config\Co_H2_asymmetric_hydrogenation.yaml
-run_download.bat    config\Co_H2_asymmetric_hydrogenation.yaml
-run_extraction.bat  config\Co_H2_asymmetric_hydrogenation.yaml
+The Python modules are cross-platform. See `docs/setup_instructions.md` for module-level commands.
+
+### Development / tests
+
+```bash
+python -m pip install -r requirements-dev.txt
+pytest -q
+python tools/run_benchmark.py --dataset examples/benchmark_synthetic.jsonl
 ```
 
-### 5. Institutional PDF access (browser mode)
+The bundled benchmark is synthetic and exists to make CI deterministic and copyright-safe. Scientific benchmark results should be reported separately from manually curated, source-verified examples.
 
-```bat
-run_download.bat config\Fe_H2_asymmetric_hydrogenation.yaml browser
-```
+## Repository structure
 
-A visible Chrome window opens. Complete any login / CAPTCHA / Cloudflare
-challenges manually, then press **ENTER** in the terminal to continue.
-The session is saved; subsequent runs reuse cookies.
-
-> **Security note:** The session directory (`~/.cache/hla_browser_session/`)
-> stores your institutional login cookies. Never commit or share this directory.
-> The `.gitignore` excludes it automatically. Delete the directory to revoke
-> saved sessions (e.g. when leaving an institution or sharing a machine).
-
-### Mac / Linux
-
-The `.bat` scripts are Windows-only. See [`docs/setup_instructions.md`](docs/setup_instructions.md)
-for the equivalent `python -m modules.*` commands.
-
----
-
-## Repository Structure
-
-```
+```text
 Hydrogenation_Literature_Agent/
-├── README.md
-├── requirements.txt
-├── setup.bat                          ← first-time setup
-├── run_search.bat                     ← Stage 1
-├── run_screening.bat                  ← Stage 2
-├── run_download.bat                   ← Stage 3 (API + browser modes)
-├── run_extraction.bat                 ← Stages 4 + 5
-│
-├── config/
-│   ├── base_config.yaml               ← shared defaults
-│   ├── Fe_H2_asymmetric_hydrogenation.yaml
-│   ├── Co_H2_asymmetric_hydrogenation.yaml
-│   ├── Mn_H2_asymmetric_hydrogenation.yaml
-│   └── Ni_H2_asymmetric_hydrogenation.yaml
-│
-├── modules/                           ← pipeline stage implementations
-│   ├── literature_search.py           ← Stage 1
-│   ├── title_abstract_screening.py    ← Stage 2
-│   ├── pdf_download.py                ← Stage 3
-│   ├── fulltext_screening.py          ← Stage 4
-│   └── reaction_data_extraction.py    ← Stage 5
-│
-├── utils/                             ← shared helpers
-│   ├── config_loader.py
-│   ├── text_utils.py
-│   ├── logger.py
-│   ├── state_manager.py
-│   └── excel_io.py
-│
-├── templates/
-│   ├── config_template.yaml           ← template for new metals
-│   └── extraction_schema_template.json
-│
+├── config/                     # Fe / Co / Mn / Ni YAML configurations
+├── modules/
+│   ├── literature_search.py
+│   ├── title_abstract_screening.py
+│   ├── pdf_download.py
+│   ├── fulltext_screening.py
+│   ├── reaction_data_extraction.py
+│   └── reaction_candidate_extraction.py
+├── tools/
+│   └── run_benchmark.py
+├── tests/
+│   ├── test_reaction_data_extraction.py
+│   └── test_reaction_candidate_extraction.py
 ├── examples/
-│   ├── example_input_config.yaml      ← annotated Fe config example
-│   └── example_extraction_output.csv  ← sample Stage 5 output
-│
+│   ├── example_extraction_output.csv
+│   └── benchmark_synthetic.jsonl
 ├── docs/
-│   ├── workflow_diagram.md            ← detailed ASCII pipeline diagram
-│   ├── methodology.md                 ← algorithm documentation
-│   ├── limitations.md                 ← known limitations
-│   ├── setup_instructions.md          ← full setup guide incl. Mac/Linux
-│   └── github_release_notes.md        ← release history
-│
-├── assets/                            ← screenshots (add your own)
-│
-├── outputs/                           ← Excel results (gitignored)
-├── papers/                            ← downloaded PDFs (gitignored)
-└── data/                              ← JSON pipeline state (gitignored)
+│   ├── methodology.md
+│   ├── validation_protocol.md
+│   ├── limitations.md
+│   └── setup_instructions.md
+├── .github/workflows/tests.yml
+├── requirements.txt
+└── requirements-dev.txt
 ```
 
----
+## Validation philosophy
 
-## Supported Configurations
+The project separates three different claims:
 
-| Metal | Config file | Symbol | Key distinguishing queries |
-|-------|-------------|--------|---------------------------|
-| Iron | `Fe_H2_asymmetric_hydrogenation.yaml` | Fe | iron/Fe + asymmetric + H₂ |
-| Cobalt | `Co_H2_asymmetric_hydrogenation.yaml` | Co | cobalt/Co + asymmetric + H₂ |
-| Manganese | `Mn_H2_asymmetric_hydrogenation.yaml` | Mn | manganese/Mn + asymmetric + H₂ |
-| Nickel | `Ni_H2_asymmetric_hydrogenation.yaml` | Ni | nickel/Ni + asymmetric + H₂ |
+1. **Software correctness** — regression tests verify deterministic parsing behaviour.
+2. **Benchmark performance** — a benchmark runner measures candidate-count and field-level extraction accuracy.
+3. **Scientific validity** — real extracted records require source verification by a human reviewer.
 
-To add a new metal or reaction system, copy `templates/config_template.yaml`
-and fill in the metal name, symbol, regex, and query groups. No code changes needed.
+This distinction is intentional. Passing unit tests does not imply that an extraction system is scientifically accurate on unseen literature.
 
----
+See `docs/validation_protocol.md` for the planned blind-test methodology, including precision/recall/F1 and field-level error analysis.
 
-## Example Output
+## Current limitations
 
-Stage 5 produces a structured Excel file and JSON. An illustrative CSV mock
-sample is provided at [`examples/example_extraction_output.csv`](examples/example_extraction_output.csv).
-It demonstrates the output format only and does not contain real extracted results.
+- Reaction extraction remains rule-based and is a baseline, not a learned model.
+- PDF text extraction does not solve scanned-document OCR or complex table reconstruction.
+- Local-window association reduces paper-level mixing but does not guarantee that all fields belong to the same experimental row.
+- SciFinder and Reaxys are not queried through the public-API pipeline.
+- Real scientific benchmark data are intentionally not bundled unless redistribution is permitted.
 
-| DOI | Metal | Ligand | ee% | Yield% | H₂ (bar) | Temp (°C) | Solvent |
-|-----|-------|--------|-----|--------|----------|-----------|---------|
-| 10.1021/jacs.5b00085 | FeCl₂ | (S)-BINAP | 90.0 | 85.0 | 50 | 25 | DCM |
-| 10.1002/anie.201912024 | Fe(OAc)₂ | Josiphos SL-J002-1 | 95.2 | 92.0 | 40 | 20 | THF |
-| 10.1039/D1SC01234A | FeBr₂ | (R,R)-Me-BPE | 88.5 | 78.0 | 60 | 30 | MeOH |
+## LLM roadmap
 
-> All displayed values are illustrative/mock examples, not real extracted
-> results. Values produced by actual runs must be verified manually against
-> source PDFs before scientific use.
+The next model-facing layer is designed as an **alternative extractor**, not as a replacement for evaluation:
 
----
+```text
+same evidence chunk
+      |----------------------|
+      v                      v
+rule-baseline-v1       llm-extractor-v1
+      |                      |
+      +----------+-----------+
+                 v
+          common schema
+                 |
+                 v
+           blind benchmark
+```
 
-## Limitations
+This makes it possible to ask a useful engineering question: does an LLM materially improve reaction-field association and recall relative to a deterministic baseline, and at what cost/error profile?
 
-- Stage 5 extraction is regex-based — **all extracted values must be manually verified**
-- Windows `.bat` scripts only (Python modules are cross-platform)
-- No OCR support for scanned PDFs
-- Search coverage excludes databases not accessible via free APIs (SciFinder, Reaxys)
-- No LLM/ML components in v1.0 — rule-based throughout
+## Responsible use
 
-See [`docs/limitations.md`](docs/limitations.md) for full discussion.
+This repository contains no journal PDFs or copyrighted article text. PDF access is limited to open-access sources or documents the end user is authorised to access. Users are responsible for publisher terms, institutional licences, and copyright compliance.
 
----
-
-## Copyright and PDF Access Disclaimer
-
-This repository contains **no PDF files** and **no copyrighted journal content**.
-
-The PDF download module attempts to resolve open-access or publicly available
-PDF links from metadata sources. Interactive browser mode can also access
-documents through the end user's own valid institutional subscription.
-
-Users are responsible for verifying that their access and use comply with
-applicable publisher terms of service, copyright law, and their institution's
-licensing agreements. See `LICENSE` for full notice.
-
----
-
-## Future Development Roadmap
-
-- [ ] LLM-assisted extraction (Claude / GPT-4o) as an alternative to regex in Stage 5
-- [ ] Shell scripts for Mac / Linux
-- [ ] Docker container for environment reproducibility
-- [ ] Unit test suite for screening and extraction modules
-- [ ] JSON-LD and RDF output for linked data compatibility
-- [ ] Web interface for configuration and result browsing
-- [ ] Integration with ChemDraw / RDKit for substrate SMILES validation
-
----
-
-## Dependencies
-
-See [`requirements.txt`](requirements.txt).
-
-| Package | Purpose |
-|---------|---------|
-| `openpyxl` | Excel read/write |
-| `pypdf` | PDF text extraction |
-| `requests` | HTTP requests to search APIs |
-| `pandas` | DataFrame I/O for log files |
-| `PyYAML` | YAML config parsing |
-| `playwright` | Browser PDF download (optional) |
-
----
+All automatically extracted scientific values must be checked against the source before publication or downstream scientific use.
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
-
-For PDF access rights, see the copyright notice section above and in `LICENSE`.
+MIT. See `LICENSE`.
