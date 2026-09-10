@@ -1,0 +1,15 @@
+{
+  "candidate_id": "rxn-synthetic-001",
+  "ee_percent": 97.5,
+  "yield_percent": 93.0,
+  "h2_pressure_bar": 20.0,
+  "temperature_c": 25.0,
+  "reaction_time_h": 12.0,
+  "solvent": "THF",
+  "ligand": "BINAP",
+  "substrate_class": "aryl ketone",
+  "evidence_text": "A synthetic asymmetric hydrogenation was conducted under 20 bar H2 at 25 C for 12 h in THF using BINAP. The aryl ketone product was isolated in 93% yield with 97.5% ee.",
+  "source_locator": {
+    "source": "synthetic-fixture"
+  }
+}
