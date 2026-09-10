@@ -32,7 +32,7 @@ SENSITIVE_PATH_MARKERS = (
     "gold-labels",
 )
 
-_ALLOWED_MANIFEST_TOP_LEVEL = {"schema_version", "split", "items", "notes"}
+_ALLOWED_MANIFEST_TOP_LEVEL = {"schema_version", "split", "items"}
 _ALLOWED_MANIFEST_ITEM_KEYS = {
     "item_id",
     "paper_id",
@@ -105,11 +105,11 @@ def assert_safe_output_path(
 
 
 def validate_blind_manifest(manifest: Mapping[str, Any]) -> dict[str, Any]:
-    """Validate a development-safe blind manifest.
+    """Validate a development-safe, metadata-only blind manifest.
 
     The manifest may expose stable identifiers and source hashes, but never gold
-    labels, expected answers, predictions, adjudication decisions or free-form
-    scientific values. A strict allow-list is used so new fields cannot leak in
+    labels, expected answers, predictions, adjudication decisions, free-form notes
+    or scientific values. A strict allow-list is used so new fields cannot leak in
     silently.
     """
 
@@ -154,5 +154,4 @@ def validate_blind_manifest(manifest: Mapping[str, Any]) -> dict[str, Any]:
         "schema_version": str(manifest.get("schema_version", "1.0")),
         "split": "blind",
         "items": cleaned_items,
-        **({"notes": manifest["notes"]} if "notes" in manifest else {}),
     }
