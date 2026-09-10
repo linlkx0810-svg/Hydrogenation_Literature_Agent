@@ -28,10 +28,15 @@
     "sdk_version": null
   },
   "evidence_builder": {
-    "version": null,
-    "source_text_extractor": null,
+    "policy_version": "prospective-blind-v2-evidence-chunk-policy-v1",
+    "module_path": "modules/reaction_candidate_extraction.py",
+    "module_git_blob_sha": "c8e36d7383df0ddb7acd128eeefc59a85b461bb8",
+    "function": "extract_reaction_candidates",
+    "extraction_method": "rule-baseline-v1",
+    "context_sentences": 2,
+    "candidate_selection": "ALL_DETERMINISTIC_CANDIDATES",
+    "source_text_extractor": "pypdf",
     "source_text_extractor_version": null,
-    "context_policy": null,
     "evidence_manifest_sha256": null,
     "chunk_count": null,
     "zero_candidate_source_count": null
