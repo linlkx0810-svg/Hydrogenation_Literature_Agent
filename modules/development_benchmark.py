@@ -56,7 +56,6 @@ def validate_development_row(row: Mapping[str, Any]) -> dict[str, Any]:
         "text",
         "gold",
         "llm_response",
-        "verifier_responses",
     }
     missing = required - set(row)
     if missing:
@@ -71,8 +70,6 @@ def validate_development_row(row: Mapping[str, Any]) -> dict[str, Any]:
         raise ValueError("gold must be an object")
     if not isinstance(row["llm_response"], Mapping):
         raise ValueError("llm_response must be an object")
-    if not isinstance(row["verifier_responses"], Mapping):
-        raise ValueError("verifier_responses must be an object")
 
     for name in ("gold", "llm_response"):
         keys = set(row[name])
@@ -82,8 +79,16 @@ def validate_development_row(row: Mapping[str, Any]) -> dict[str, Any]:
                 f"{name} must contain exactly the eight scientific fields; "
                 f"missing={sorted(expected - keys)}, extra={sorted(keys - expected)}"
             )
-    if set(row["verifier_responses"]) != set(FIELD_NAMES):
-        raise ValueError("verifier_responses must contain exactly the eight fields")
+
+    overrides = row.get("verifier_overrides", {})
+    if not isinstance(overrides, Mapping):
+        raise ValueError("verifier_overrides must be an object when supplied")
+    unknown_override_fields = set(overrides) - set(FIELD_NAMES)
+    if unknown_override_fields:
+        raise ValueError(
+            "verifier_overrides contains unknown fields: "
+            + ", ".join(sorted(unknown_override_fields))
+        )
 
     return dict(row)
 
@@ -236,6 +241,29 @@ def _llm_replay_prediction(row: Mapping[str, Any]) -> dict[str, Any]:
     return _scientific_fields(result.to_dict())
 
 
+def _build_verifier_replay_responses(
+    row: Mapping[str, Any],
+    llm_prediction: Mapping[str, Any],
+) -> dict[str, Mapping[str, str]]:
+    """Build compact synthetic replay responses without consulting gold values.
+
+    By default, a non-null replayed extraction is marked accepted/supported and a
+    null extraction unresolved/missing. Synthetic adversarial rows override only
+    the fields needed to simulate rejection, conflict, ambiguity, or verifier
+    conservatism. This is fixture shorthand, not a real verifier model.
+    """
+
+    responses: dict[str, Mapping[str, str]] = {}
+    for field in FIELD_NAMES:
+        if llm_prediction.get(field) is None:
+            responses[field] = {"status": "unresolved", "reason_code": "missing"}
+        else:
+            responses[field] = {"status": "accepted", "reason_code": "supported"}
+    for field, judgement in dict(row.get("verifier_overrides", {})).items():
+        responses[field] = dict(judgement)
+    return responses
+
+
 def _verified_prediction(
     row: Mapping[str, Any],
     llm_prediction: Mapping[str, Any],
@@ -246,7 +274,7 @@ def _verified_prediction(
         **_scientific_fields(llm_prediction),
     }
     provider = ReplayVerifierProvider(
-        responses=row["verifier_responses"],
+        responses=_build_verifier_replay_responses(row, llm_prediction),
         model_name="development-replay-verifier",
     )
     result = verify_candidate(candidate, provider=provider)
