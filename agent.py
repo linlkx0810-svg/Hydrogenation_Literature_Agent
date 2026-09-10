@@ -9,9 +9,9 @@ Reviewer-only and blind-gold inputs are blocked during ordinary development.
 Benchmark evaluation against such material requires explicit evaluation mode.
 
 `llm-extract-replay` validates the `llm-extractor-v1` contract using a saved JSON
-provider response. It is a deterministic integration/replay tool, not a network
-model client. Real provider adapters use the same interface in
-`modules.llm_extractor`.
+provider response. `verify-replay` validates field-level verifier behavior using
+saved strict judgements. These are deterministic replay tools, not network model
+clients.
 """
 
 from __future__ import annotations
@@ -23,6 +23,7 @@ from pathlib import Path
 from modules.blind_integrity import assert_safe_input_path, assert_safe_output_path
 from modules.llm_extractor import ReplayJSONProvider, extract_reaction_chunk
 from modules.reaction_candidate_extraction import candidates_to_dicts, extract_reaction_candidates
+from modules.verifier import ReplayVerifierProvider, verify_candidate
 from tools.run_benchmark import evaluate, load_jsonl
 
 
@@ -75,6 +76,35 @@ def command_llm_extract_replay(args: argparse.Namespace) -> int:
         output_path = assert_safe_output_path(Path(args.output), purpose="model")
         output_path.write_text(rendered + "\n", encoding="utf-8")
         print(f"Wrote LLM candidate to {output_path}")
+    else:
+        print(rendered)
+    return 0
+
+
+def command_verify_replay(args: argparse.Namespace) -> int:
+    candidate_path = assert_safe_input_path(Path(args.candidate), evaluation_mode=False)
+    responses_path = assert_safe_input_path(Path(args.responses), evaluation_mode=False)
+    candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+    responses = json.loads(responses_path.read_text(encoding="utf-8"))
+
+    provider = ReplayVerifierProvider(
+        responses=responses,
+        model_name=args.model_name,
+    )
+    result = verify_candidate(candidate, provider=provider)
+    payload = {
+        "agent": "Hydrogenation Literature Agent",
+        "verifier": "verifier-v1",
+        "provider_mode": "replay",
+        "candidate_source": str(candidate_path),
+        "verification": result.to_dict(),
+    }
+
+    rendered = json.dumps(payload, indent=2, ensure_ascii=False)
+    if args.output:
+        output_path = assert_safe_output_path(Path(args.output), purpose="model")
+        output_path.write_text(rendered + "\n", encoding="utf-8")
+        print(f"Wrote verification result to {output_path}")
     else:
         print(rendered)
     return 0
@@ -136,6 +166,28 @@ def build_parser() -> argparse.ArgumentParser:
     )
     replay_parser.add_argument("--output", help="Optional JSON output path")
     replay_parser.set_defaults(func=command_llm_extract_replay)
+
+    verify_parser = subparsers.add_parser(
+        "verify-replay",
+        help=(
+            "Validate verifier-v1 on a saved candidate and saved strict field "
+            "judgements. No network model call is made."
+        ),
+    )
+    verify_parser.add_argument(
+        "--candidate", required=True,
+        help="JSON candidate containing scientific fields and evidence_text",
+    )
+    verify_parser.add_argument(
+        "--responses", required=True,
+        help="JSON mapping each scientific field to status/reason_code",
+    )
+    verify_parser.add_argument(
+        "--model-name", default="replay-verifier",
+        help="Verifier model/provider name recorded in metadata",
+    )
+    verify_parser.add_argument("--output", help="Optional JSON output path")
+    verify_parser.set_defaults(func=command_verify_replay)
 
     benchmark_parser = subparsers.add_parser(
         "benchmark",
