@@ -12,6 +12,7 @@ from modules.llm_extractor import (
     extract_reaction_chunk,
     validate_response,
 )
+from modules.reaction_candidate_extraction import extract_reaction_candidates
 
 
 def payload(**overrides):
@@ -155,3 +156,32 @@ def test_empty_evidence_is_rejected_before_provider_call():
     with pytest.raises(ValueError, match="non-empty"):
         extract_reaction_chunk("   ", provider)
     assert provider.last_request is None
+
+
+def test_llm_and_rule_baseline_share_same_scientific_fields():
+    evidence = (
+        "A synthetic asymmetric hydrogenation was conducted under 20 bar H2 at "
+        "25 C for 12 h in THF using BINAP. The aryl ketone product was isolated "
+        "in 93% yield with 97.5% ee."
+    )
+    llm_values = payload(
+        ee_percent=97.5,
+        yield_percent=93.0,
+        h2_pressure_bar=20.0,
+        temperature_c=25.0,
+        reaction_time_h=12.0,
+        solvent="THF",
+        ligand="BINAP",
+        substrate_class="aryl ketone",
+    )
+    llm_record = extract_reaction_chunk(
+        evidence, ReplayJSONProvider(llm_values)
+    ).to_dict()
+    baseline_records = extract_reaction_candidates(evidence, context_sentences=1)
+    assert len(baseline_records) == 1
+    baseline_record = baseline_records[0].to_dict()
+
+    assert all(field in llm_record for field in FIELD_NAMES)
+    assert all(field in baseline_record for field in FIELD_NAMES)
+    for field in FIELD_NAMES:
+        assert llm_record[field] == baseline_record[field]
