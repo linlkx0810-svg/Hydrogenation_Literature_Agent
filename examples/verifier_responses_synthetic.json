@@ -1,0 +1,10 @@
+{
+  "ee_percent": {"status": "accepted", "reason_code": "supported"},
+  "yield_percent": {"status": "accepted", "reason_code": "supported"},
+  "h2_pressure_bar": {"status": "accepted", "reason_code": "supported"},
+  "temperature_c": {"status": "accepted", "reason_code": "supported"},
+  "reaction_time_h": {"status": "accepted", "reason_code": "supported"},
+  "solvent": {"status": "accepted", "reason_code": "supported"},
+  "ligand": {"status": "accepted", "reason_code": "supported"},
+  "substrate_class": {"status": "accepted", "reason_code": "supported"}
+}
