@@ -1,0 +1,53 @@
+{
+  "run_manifest_version": "prospective-blind-v2-run-manifest-v1",
+  "created_utc": null,
+  "benchmark_split": "prospective-blind-v2",
+  "blind_manifest_sha256": "21f9e9180428514d88868aeb3b7e6acd23f3aac29ada2dc0ce466abed22114e0",
+  "blind_locked_list_sha256": "97f6b78f2947bb972c57db078456c3ec9ba11ccdb0a03ebb3cd0899b6de029c7",
+  "repository_commit": null,
+  "extractor": {
+    "version": "llm-extractor-v1",
+    "prompt_version": "llm-extractor-prompt-v1",
+    "git_blob_sha": "b4aeff654824bd2d23f23b77920a9f8487917f27"
+  },
+  "verifier": {
+    "version": "verifier-v1",
+    "prompt_version": "verifier-prompt-v1",
+    "git_blob_sha": "7733e1f7697a35b9d72541cd591803edaa896350"
+  },
+  "provider": {
+    "name": "OpenAI",
+    "api_family": "Responses API",
+    "model_id": "gpt-5.6-sol",
+    "reasoning_effort": "medium",
+    "temperature": null,
+    "top_p": null,
+    "seed": null,
+    "adapter_version": "openai-responses-json-v1",
+    "adapter_git_blob_sha": "56519bf43d7b267d83023ca6491a7686bd48a9d9",
+    "sdk_version": null
+  },
+  "evidence_builder": {
+    "version": null,
+    "source_text_extractor": null,
+    "source_text_extractor_version": null,
+    "context_policy": null,
+    "evidence_manifest_sha256": null,
+    "chunk_count": null,
+    "zero_candidate_source_count": null
+  },
+  "source_integrity": {
+    "source_manifest_sha256": null,
+    "source_file_count": null,
+    "all_source_hashes_verified": false
+  },
+  "outputs": {
+    "raw_predictions_path": null,
+    "raw_predictions_sha256": null,
+    "verifier_outputs_path": null,
+    "verifier_outputs_sha256": null
+  },
+  "execution_state": "PRE_RUN_NOT_READY",
+  "benchmark_execution_allowed": false,
+  "integrity_note": "Populate all required null fields and freeze this manifest before the first live blind prediction. Do not include blind gold, reviewer decisions, adjudication, or scientific answers in this file."
+}
