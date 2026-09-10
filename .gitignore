@@ -29,6 +29,16 @@ logs/
 # --- Runtime state ---
 PROJECT_STATE.json
 
+# --- Blind / reviewer-only evaluation artifacts ---
+reviewer_only/
+reviewer-only/
+blind_gold/
+blind-gold/
+sealed_predictions/
+sealed-predictions/
+adjudication/
+*_ADJUDICATED.csv
+
 # --- PDFs (copyright - never commit) ---
 *.pdf
 
