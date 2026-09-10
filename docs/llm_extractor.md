@@ -93,12 +93,12 @@ examples/evidence_chunk_synthetic.txt
 examples/llm_response_synthetic.json
 ```
 
-Run the deterministic rule baseline:
+Run the deterministic rule baseline with one neighboring sentence so its evidence window covers the same two-sentence synthetic chunk:
 
 ```bash
 python agent.py extract-text \
   --input examples/evidence_chunk_synthetic.txt \
-  --context 0
+  --context 1
 ```
 
 Replay a saved strict LLM response through the exact LLM schema and provenance layer:
