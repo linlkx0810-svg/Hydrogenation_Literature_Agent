@@ -75,6 +75,18 @@ def test_manifest_rejects_gold_or_answer_fields(leaking_key):
         validate_blind_manifest(manifest)
 
 
+def test_manifest_rejects_free_form_top_level_notes():
+    with pytest.raises(BlindIntegrityError):
+        validate_blind_manifest(
+            {
+                "schema_version": "1.0",
+                "split": "blind",
+                "items": [{"item_id": "case-001"}],
+                "notes": "possible answer leakage",
+            }
+        )
+
+
 def test_manifest_rejects_invalid_hash():
     with pytest.raises(BlindIntegrityError):
         validate_blind_manifest(
