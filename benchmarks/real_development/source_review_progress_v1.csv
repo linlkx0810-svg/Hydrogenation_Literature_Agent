@@ -1,0 +1,13 @@
+dev_id,combined_record_id,doi,target_anchor_status,finalized_field_slots,final_null_fields,review_status,public_note
+DEV-001,FE-H2-AH-0005,10.1002/anie.201301972,LOCATOR_ONLY,0,,PENDING_SOURCE_REVIEW,"Historical Stage5C/5D seed retained; exact asymmetric relay target must be anchored"
+DEV-002,FE-H2-AH-0016,10.1021/jacs.1c04773,LOCATOR_ONLY,0,,PENDING_SOURCE_REVIEW,"Historical seed retained; numeric temperature/time association still requires target-entry review"
+DEV-003,FE-H2-AH-0022,10.1021/jacs.5b00085,LOCATOR_ONLY,0,,PENDING_SOURCE_REVIEW,"Historical relay seed retained; target substrate class and er mapping require adjudication"
+DEV-004,NI-H2-AH-0031,10.1002/anie.201902576,TABLE1_MODEL_1A_QUINOXPSTAR,8,yield_percent,SOURCE_REVIEWED_TARGET_ANCHORED,"Re-anchored to Wiley Table 1 model-substrate ligand-screening entry; yield is intentionally null because this target entry reports conversion rather than yield"
+DEV-005,NI-H2-AH-0032,10.1002/ejoc.202100642,LOCATOR_ONLY,0,,PENDING_SOURCE_REVIEW,"Main text confirms QuinoxP* and TFE/AcOH context but exact target-entry pressure/time/outcomes remain to be bound"
+DEV-006,NI-H2-AH-0033,10.1021/acs.orglett.2c00608,LOCATOR_ONLY,0,,PENDING_SOURCE_REVIEW,"Publisher SI identified but exact product target/general-procedure mapping still pending"
+DEV-007,FE-H2-AH-0006,10.1021/ic801518h,LOCATOR_ONLY,0,,PENDING_SOURCE_REVIEW,"Historical acetophenone/complex-6 seed retained; conversion-vs-yield and time require target review"
+DEV-008,FE-H2-AH-0011,10.1021/ja5003636,LOCATOR_ONLY,0,,PENDING_SOURCE_REVIEW,"Historical representative acetophenone seed retained; reaction time requires source anchoring"
+DEV-009,FE-H2-AH-0017,10.1021/acs.joc.9b01964,LOCATOR_ONLY,0,,PENDING_SOURCE_REVIEW,"Historical 98.3-vs-99 ee discrepancy requires exact target-entry adjudication"
+DEV-010,NI-H2-AH-0007,10.1021/jacs.6b00519,TABLE_ANCHOR_SEED_COMPLETE,0,,PENDING_FINAL_SOURCE_RECHECK,"All eight values seeded historically but not promoted until same-entry source recheck"
+DEV-011,NI-H2-AH-0025,10.1038/s41467-024-49801-0,FIG3C_PROCEDURE_J_1L_TO_2L,8,,SOURCE_REVIEWED_TARGET_ANCHORED,"Publisher SI Procedure J directly binds the Fig.3c Ibuprofen reaction; all eight field slots adjudicated"
+DEV-012,NI-H2-AH-0026,10.1016/j.xcrp.2024.102261,LOCATOR_ONLY,0,,PENDING_SOURCE_REVIEW,"Historical PHOX seed retained; exact product outcome/time still requires source review"
