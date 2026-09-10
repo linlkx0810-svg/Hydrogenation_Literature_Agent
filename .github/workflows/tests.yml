@@ -44,3 +44,10 @@ jobs:
             --input examples/evidence_chunk_synthetic.txt \
             --response examples/llm_response_synthetic.json \
             --model-name ci-replay-model
+
+      - name: Smoke-test verifier replay contract
+        run: |
+          python agent.py verify-replay \
+            --candidate examples/verifier_candidate_synthetic.json \
+            --responses examples/verifier_responses_synthetic.json \
+            --model-name ci-replay-verifier
