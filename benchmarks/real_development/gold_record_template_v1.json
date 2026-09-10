@@ -1,0 +1,32 @@
+{
+  "benchmark_version": "real-development-v1",
+  "benchmark_kind": "real-non-blind-development",
+  "scientific_performance_claim": false,
+  "dev_id": "DEV-XXX",
+  "combined_record_id": "FE-H2-AH-XXXX",
+  "doi": "10.xxxx/example",
+  "target_reaction_id": "local-stable-reaction-id",
+  "source_scope": "MAIN_PLUS_SI",
+  "gold": {
+    "ee_percent": null,
+    "yield_percent": null,
+    "h2_pressure_bar": null,
+    "temperature_c": null,
+    "reaction_time_h": null,
+    "solvent": null,
+    "ligand": null,
+    "substrate_class": null
+  },
+  "field_evidence": {
+    "ee_percent": {"source": null, "locator": null, "status": "UNSET"},
+    "yield_percent": {"source": null, "locator": null, "status": "UNSET"},
+    "h2_pressure_bar": {"source": null, "locator": null, "status": "UNSET"},
+    "temperature_c": {"source": null, "locator": null, "status": "UNSET"},
+    "reaction_time_h": {"source": null, "locator": null, "status": "UNSET"},
+    "solvent": {"source": null, "locator": null, "status": "UNSET"},
+    "ligand": {"source": null, "locator": null, "status": "UNSET"},
+    "substrate_class": {"source": null, "locator": null, "status": "UNSET"}
+  },
+  "curation_status": "UNSET",
+  "notes": "Do not place copyrighted evidence text in the public repository. Keep the populated gold pack local/private."
+}
