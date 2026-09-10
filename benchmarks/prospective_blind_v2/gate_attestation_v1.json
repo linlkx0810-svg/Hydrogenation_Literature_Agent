@@ -1,0 +1,23 @@
+{
+  "benchmark_split": "prospective-blind-v2",
+  "attestation_version": "gate-attestation-v1",
+  "date": "2026-09-10",
+  "quota_complete": true,
+  "eligible_locked_count": 12,
+  "duplicate_count": 0,
+  "development_overlap_count": 0,
+  "paper_overlap_gate": "PASS",
+  "prospective_blind_manifest_sha256": "21f9e9180428514d88868aeb3b7e6acd23f3aac29ada2dc0ce466abed22114e0",
+  "eligible_locked_list_sha256": "97f6b78f2947bb972c57db078456c3ec9ba11ccdb0a03ebb3cd0899b6de029c7",
+  "raw_mentions_generated": false,
+  "gold_generated": false,
+  "predictions_generated": false,
+  "resolver_run": false,
+  "normalization_run": false,
+  "scoring_run": false,
+  "historical_answers_accessed": false,
+  "adjudication_accessed": false,
+  "sealed_predictions_accessed": false,
+  "manifest_values_published": false,
+  "note": "Identity-only prospective blind v2 recruitment completed under independent custodian workflow. This public attestation records only counts, gate state, and hashes; the blind paper identity manifest remains outside the public repository."
+}

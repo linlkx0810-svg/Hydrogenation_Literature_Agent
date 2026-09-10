@@ -1,0 +1,81 @@
+{
+  "freeze_version": "prospective-blind-v2-evaluation-freeze-v1",
+  "date": "2026-09-10",
+  "split": "prospective-blind-v2",
+  "identity_overlap_gate": "PASS",
+  "blind_manifest_sha256": "21f9e9180428514d88868aeb3b7e6acd23f3aac29ada2dc0ce466abed22114e0",
+  "blind_locked_list_sha256": "97f6b78f2947bb972c57db078456c3ec9ba11ccdb0a03ebb3cd0899b6de029c7",
+  "development_gold_sha256": "990799475b89051a2013c77fbcbb3128b3af278817dd67ba008ee93109c25cc5",
+  "scientific_fields": [
+    "ee_percent",
+    "yield_percent",
+    "h2_pressure_bar",
+    "temperature_c",
+    "reaction_time_h",
+    "solvent",
+    "ligand",
+    "substrate_class"
+  ],
+  "extractor": {
+    "version": "llm-extractor-v1",
+    "prompt_version": "llm-extractor-prompt-v1",
+    "module_path": "modules/llm_extractor.py",
+    "git_blob_sha": "b4aeff654824bd2d23f23b77920a9f8487917f27",
+    "frozen": true
+  },
+  "verifier": {
+    "version": "verifier-v1",
+    "prompt_version": "verifier-prompt-v1",
+    "module_path": "modules/verifier.py",
+    "git_blob_sha": "7733e1f7697a35b9d72541cd591803edaa896350",
+    "frozen": true
+  },
+  "evidence_builder": {
+    "policy_version": "prospective-blind-v2-evidence-chunk-policy-v1",
+    "module_path": "modules/reaction_candidate_extraction.py",
+    "git_blob_sha": "c8e36d7383df0ddb7acd128eeefc59a85b461bb8",
+    "function": "extract_reaction_candidates",
+    "extraction_method": "rule-baseline-v1",
+    "context_sentences": 2,
+    "candidate_selection": "ALL_DETERMINISTIC_CANDIDATES",
+    "manual_target_selection": false,
+    "ocr_allowed": false,
+    "frozen": true
+  },
+  "code_base": {
+    "source_branch": "codex/p0-real-development-set-v1",
+    "source_commit": "0d56d8905dcae74c2022bb77aa999fac88a66473"
+  },
+  "model_runtime": {
+    "provider": "OpenAI",
+    "api_family": "Responses API",
+    "model_id": "gpt-5.6-sol",
+    "provider_adapter_version": "openai-responses-json-v1",
+    "provider_adapter_path": "modules/openai_responses_provider.py",
+    "provider_adapter_git_blob_sha": "56519bf43d7b267d83023ca6491a7686bd48a9d9",
+    "structured_output": "strict_json_schema",
+    "reasoning_effort": "medium",
+    "temperature": null,
+    "top_p": null,
+    "seed": null,
+    "sdk_version": null,
+    "state": "MODEL_AND_ADAPTER_PINNED_SDK_PENDING"
+  },
+  "engineering_validation": {
+    "synthetic_contract_ci_run_id": 34525060819,
+    "synthetic_contract_ci_conclusion": "success",
+    "network_calls_in_ci": false
+  },
+  "execution": {
+    "raw_llm_run_started": false,
+    "verifier_run_started": false,
+    "scientific_scoring_started": false,
+    "benchmark_execution_allowed": false,
+    "blocked_on": [
+      "exact OpenAI SDK version and pypdf version must be captured in the live benchmark environment",
+      "blind source package must be staged with hashes matching the frozen identity/source manifest",
+      "evidence chunks must be generated with the frozen policy and their manifest/hash frozen before first live prediction"
+    ]
+  },
+  "integrity_rule": "No extractor/verifier prompt, evidence-builder policy, or scientific logic changes are allowed after this freeze for the reported prospective-blind-v2 result. Any change creates a new evaluation version."
+}
