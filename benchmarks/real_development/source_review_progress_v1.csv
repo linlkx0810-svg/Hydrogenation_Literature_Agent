@@ -3,7 +3,7 @@ DEV-001,FE-H2-AH-0005,10.1002/anie.201301972,LOCATOR_ONLY,0,,PENDING_SOURCE_REVI
 DEV-002,FE-H2-AH-0016,10.1021/jacs.1c04773,LOCATOR_ONLY,0,,PENDING_SOURCE_REVIEW,"Historical seed retained; numeric temperature/time association still requires target-entry review"
 DEV-003,FE-H2-AH-0022,10.1021/jacs.5b00085,LOCATOR_ONLY,0,,PENDING_SOURCE_REVIEW,"Historical relay seed retained; target substrate class and er mapping require adjudication"
 DEV-004,NI-H2-AH-0031,10.1002/anie.201902576,TABLE1_MODEL_1A_QUINOXPSTAR,8,yield_percent,SOURCE_REVIEWED_TARGET_ANCHORED,"Re-anchored to Wiley Table 1 model-substrate ligand-screening entry; yield is intentionally null because this target entry reports conversion rather than yield"
-DEV-005,NI-H2-AH-0032,10.1002/ejoc.202100642,LOCATOR_ONLY,0,,PENDING_SOURCE_REVIEW,"Main text confirms QuinoxP* and TFE/AcOH context but exact target-entry pressure/time/outcomes remain to be bound"
+DEV-005,NI-H2-AH-0032,10.1002/ejoc.202100642,SI_GENERAL_PROCEDURE_1A_TO_2A,8,,SOURCE_REVIEWED_TARGET_ANCHORED,"Publisher SI directly binds 1a-to-2a conditions/outcome; ee is deterministically derived from the same-entry 92:8 er while the original er is preserved privately"
 DEV-006,NI-H2-AH-0033,10.1021/acs.orglett.2c00608,LOCATOR_ONLY,0,,PENDING_SOURCE_REVIEW,"Publisher SI identified but exact product target/general-procedure mapping still pending"
 DEV-007,FE-H2-AH-0006,10.1021/ic801518h,LOCATOR_ONLY,0,,PENDING_SOURCE_REVIEW,"Historical acetophenone/complex-6 seed retained; conversion-vs-yield and time require target review"
 DEV-008,FE-H2-AH-0011,10.1021/ja5003636,LOCATOR_ONLY,0,,PENDING_SOURCE_REVIEW,"Historical representative acetophenone seed retained; reaction time requires source anchoring"
