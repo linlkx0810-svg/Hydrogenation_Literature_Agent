@@ -7,6 +7,11 @@ reaction-level agent and benchmark it.
 
 Reviewer-only and blind-gold inputs are blocked during ordinary development.
 Benchmark evaluation against such material requires explicit evaluation mode.
+
+`llm-extract-replay` validates the `llm-extractor-v1` contract using a saved JSON
+provider response. It is a deterministic integration/replay tool, not a network
+model client. Real provider adapters use the same interface in
+`modules.llm_extractor`.
 """
 
 from __future__ import annotations
@@ -16,6 +21,7 @@ import json
 from pathlib import Path
 
 from modules.blind_integrity import assert_safe_input_path, assert_safe_output_path
+from modules.llm_extractor import ReplayJSONProvider, extract_reaction_chunk
 from modules.reaction_candidate_extraction import candidates_to_dicts, extract_reaction_candidates
 from tools.run_benchmark import evaluate, load_jsonl
 
@@ -37,6 +43,38 @@ def command_extract_text(args: argparse.Namespace) -> int:
         output_path = assert_safe_output_path(Path(args.output), purpose="model")
         output_path.write_text(rendered + "\n", encoding="utf-8")
         print(f"Wrote {len(candidates)} candidate(s) to {output_path}")
+    else:
+        print(rendered)
+    return 0
+
+
+def command_llm_extract_replay(args: argparse.Namespace) -> int:
+    evidence_path = assert_safe_input_path(Path(args.input), evaluation_mode=False)
+    response_path = assert_safe_input_path(Path(args.response), evaluation_mode=False)
+    evidence = evidence_path.read_text(encoding="utf-8")
+    response = json.loads(response_path.read_text(encoding="utf-8"))
+
+    provider = ReplayJSONProvider(response=response, model_name=args.model_name)
+    result = extract_reaction_chunk(
+        evidence,
+        provider,
+        candidate_id=args.candidate_id,
+        evidence_start=args.evidence_start,
+        source_locator={"source": str(evidence_path)},
+    )
+    payload = {
+        "agent": "Hydrogenation Literature Agent",
+        "extractor": "llm-extractor-v1",
+        "source": str(evidence_path),
+        "provider_mode": "replay",
+        "candidate": result.to_dict(),
+    }
+
+    rendered = json.dumps(payload, indent=2, ensure_ascii=False)
+    if args.output:
+        output_path = assert_safe_output_path(Path(args.output), purpose="model")
+        output_path.write_text(rendered + "\n", encoding="utf-8")
+        print(f"Wrote LLM candidate to {output_path}")
     else:
         print(rendered)
     return 0
@@ -68,6 +106,36 @@ def build_parser() -> argparse.ArgumentParser:
         help="Number of neighboring sentences to include around result anchors",
     )
     extract_parser.set_defaults(func=command_extract_text)
+
+    replay_parser = subparsers.add_parser(
+        "llm-extract-replay",
+        help=(
+            "Validate llm-extractor-v1 using one evidence chunk and a saved strict "
+            "JSON provider response. No network model call is made."
+        ),
+    )
+    replay_parser.add_argument(
+        "--input", required=True,
+        help="UTF-8 file containing one already-selected evidence chunk",
+    )
+    replay_parser.add_argument(
+        "--response", required=True,
+        help="JSON file containing exactly the eight LLM extraction fields",
+    )
+    replay_parser.add_argument(
+        "--model-name", default="replay-json",
+        help="Model/provider name recorded in extraction metadata",
+    )
+    replay_parser.add_argument(
+        "--candidate-id", default="rxn-llm-0001",
+        help="Caller-controlled candidate identifier",
+    )
+    replay_parser.add_argument(
+        "--evidence-start", type=int, default=0,
+        help="Optional source character offset for the beginning of the chunk",
+    )
+    replay_parser.add_argument("--output", help="Optional JSON output path")
+    replay_parser.set_defaults(func=command_llm_extract_replay)
 
     benchmark_parser = subparsers.add_parser(
         "benchmark",
