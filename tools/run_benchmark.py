@@ -4,6 +4,10 @@ The benchmark format is JSONL. Each row contains `text` and `expected`, where
 `expected` is a list of reaction records. This runner reports field-level exact
 match accuracy and candidate-count accuracy. It is intentionally lightweight so
 it can run in CI without API keys or copyrighted source material.
+
+Blind/reviewer-only inputs are blocked by default. They may be opened only when
+`--evaluation-mode` is supplied explicitly; this keeps ordinary development runs
+from accidentally reading frozen gold material.
 """
 
 from __future__ import annotations
@@ -17,6 +21,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from modules.blind_integrity import assert_safe_input_path
 from modules.reaction_candidate_extraction import extract_reaction_candidates
 
 FIELDS = (
@@ -76,9 +81,10 @@ def evaluate(rows: list[dict]) -> dict:
     }
 
 
-def load_jsonl(path: Path) -> list[dict]:
+def load_jsonl(path: Path, *, evaluation_mode: bool = False) -> list[dict]:
+    safe_path = assert_safe_input_path(path, evaluation_mode=evaluation_mode)
     rows = []
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in safe_path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if line:
             rows.append(json.loads(line))
@@ -88,10 +94,21 @@ def load_jsonl(path: Path) -> list[dict]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", default="examples/benchmark_synthetic.jsonl")
+    parser.add_argument(
+        "--evaluation-mode",
+        action="store_true",
+        help=(
+            "Explicitly authorise benchmark evaluation against reviewer-only or "
+            "blind-gold inputs. Do not use during extractor/prompt development."
+        ),
+    )
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
     args = parser.parse_args()
 
-    results = evaluate(load_jsonl(Path(args.dataset)))
+    dataset_path = Path(args.dataset)
+    results = evaluate(
+        load_jsonl(dataset_path, evaluation_mode=args.evaluation_mode)
+    )
     if args.json:
         print(json.dumps(results, indent=2))
         return
