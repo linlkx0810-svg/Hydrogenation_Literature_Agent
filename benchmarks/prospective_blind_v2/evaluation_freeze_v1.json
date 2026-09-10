@@ -35,14 +35,24 @@
     "source_commit": "0d56d8905dcae74c2022bb77aa999fac88a66473"
   },
   "model_runtime": {
-    "provider": null,
-    "model_id": null,
-    "provider_adapter_version": null,
-    "reasoning_effort": null,
+    "provider": "OpenAI",
+    "api_family": "Responses API",
+    "model_id": "gpt-5.6-sol",
+    "provider_adapter_version": "openai-responses-json-v1",
+    "provider_adapter_path": "modules/openai_responses_provider.py",
+    "provider_adapter_git_blob_sha": "56519bf43d7b267d83023ca6491a7686bd48a9d9",
+    "structured_output": "strict_json_schema",
+    "reasoning_effort": "medium",
     "temperature": null,
     "top_p": null,
     "seed": null,
-    "state": "PENDING_EXACT_MODEL_FREEZE"
+    "sdk_version": null,
+    "state": "MODEL_AND_ADAPTER_PINNED_SDK_PENDING"
+  },
+  "engineering_validation": {
+    "synthetic_contract_ci_run_id": 34524915968,
+    "synthetic_contract_ci_conclusion": "success",
+    "network_calls_in_ci": false
   },
   "execution": {
     "raw_llm_run_started": false,
@@ -50,9 +60,9 @@
     "scientific_scoring_started": false,
     "benchmark_execution_allowed": false,
     "blocked_on": [
-      "exact model provider/model ID and generation settings must be frozen",
-      "live provider adapter must pass synthetic-only contract smoke tests",
-      "blind source package must be staged with hashes matching the frozen identity manifest"
+      "exact OpenAI SDK version must be captured in the live benchmark environment",
+      "blind source package must be staged with hashes matching the frozen identity manifest",
+      "evidence-chunk construction version and chunk hashes must be frozen before first live prediction"
     ]
   },
   "integrity_rule": "No extractor/verifier prompt or logic changes are allowed after this freeze for the reported prospective-blind-v2 result. Any change creates a new evaluation version."
