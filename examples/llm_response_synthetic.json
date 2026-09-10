@@ -1,0 +1,10 @@
+{
+  "ee_percent": 97.5,
+  "yield_percent": 93.0,
+  "h2_pressure_bar": 20.0,
+  "temperature_c": 25.0,
+  "reaction_time_h": 12.0,
+  "solvent": "THF",
+  "ligand": "BINAP",
+  "substrate_class": "aryl ketone"
+}

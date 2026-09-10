@@ -37,3 +37,10 @@ jobs:
 
       - name: Smoke-test unified agent CLI
         run: python agent.py benchmark --dataset examples/benchmark_synthetic.jsonl
+
+      - name: Smoke-test LLM extractor replay contract
+        run: |
+          python agent.py llm-extract-replay \
+            --input examples/evidence_chunk_synthetic.txt \
+            --response examples/llm_response_synthetic.json \
+            --model-name ci-replay-model
