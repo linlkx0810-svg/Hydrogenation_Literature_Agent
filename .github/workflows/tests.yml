@@ -51,3 +51,6 @@ jobs:
             --candidate examples/verifier_candidate_synthetic.json \
             --responses examples/verifier_responses_synthetic.json \
             --model-name ci-replay-verifier
+
+      - name: Run development benchmark contract
+        run: python tools/run_development_benchmark.py --json
