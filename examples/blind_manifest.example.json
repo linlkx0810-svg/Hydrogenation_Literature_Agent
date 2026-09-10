@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "split": "blind",
+  "items": [
+    {
+      "item_id": "case-001",
+      "paper_id": "paper-001",
+      "doi": "10.0000/example-doi",
+      "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
+  "notes": "Development-safe manifest: identifiers and source hashes only. No gold labels, expected values, predictions, or adjudication decisions."
+}
