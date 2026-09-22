@@ -26,11 +26,10 @@ def test_verifier_rejects_tampered_evidence_offsets():
 
 def test_undefined_ligand_alias_routes_to_review_not_guess():
     text = (
-        "The catalyst containing ligand L9 was used for hydrogenation of a ketone. "
-        "The product was obtained in 90% yield and 91% ee."
+        "Using L9, hydrogenation of a ketone gave 90% yield and 91% ee."
     )
-    candidate = extract_reaction_candidates(text)[0]
-    candidate.ligand = "L9"
+    candidate = extract_reaction_candidates(text, context_sentences=0)[0]
+    assert candidate.ligand == "L9"
     verification = verify_candidate(candidate, text)
     ligand = [
         field for field in verification.fields
@@ -43,11 +42,10 @@ def test_undefined_ligand_alias_routes_to_review_not_guess():
 def test_source_defined_alias_is_supported():
     text = (
         "SEGPHOS (L3) was selected as the ligand. "
-        "The catalyst containing L3 was used for hydrogenation of a ketone. "
-        "The product was obtained in 90% yield and 91% ee."
+        "Using L3, hydrogenation of a ketone gave 90% yield and 91% ee."
     )
-    candidate = extract_reaction_candidates(text)[0]
-    candidate.ligand = "L3"
+    candidate = extract_reaction_candidates(text, context_sentences=0)[0]
+    assert candidate.ligand == "L3"
     verification = verify_candidate(candidate, text)
     ligand = [
         field for field in verification.fields
