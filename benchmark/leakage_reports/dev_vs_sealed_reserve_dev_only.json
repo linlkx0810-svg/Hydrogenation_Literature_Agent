@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "development_rows": 12,
+  "blind_rows": 4,
+  "known_contamination_rows": 0,
+  "doi_overlap_count": 0,
+  "paper_id_overlap_count": 0,
+  "known_contamination_doi_overlap_count": 0,
+  "known_contamination_paper_id_overlap_count": 0,
+  "doi_overlap": [],
+  "paper_id_overlap": [],
+  "known_contamination_doi_overlap": [],
+  "known_contamination_paper_id_overlap": [],
+  "development_manifest_sha256": "a73a81d5c84cc7a69e820de0e9add859539868ac62129536110fd930000ed454",
+  "blind_manifest_sha256": "16500f13e2234ba28aa8e95ed362c094d27c9d045687c523428b5cde99b6a248",
+  "exclude_manifest_sha256": {}
+}

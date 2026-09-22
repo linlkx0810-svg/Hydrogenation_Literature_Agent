@@ -1,24 +1,24 @@
 # External Reserve Preflight Status
 
-Date: 2026-09-22
+Date: 2026-09-22 (updated after development-set recovery)
 
 ## Current result
 
-Status: **PARTIAL_PASS / BLOCKED_PENDING_COMPLETE_DEVELOPMENT_MANIFEST**
+`FORMAL_LEAKAGE_GATE = FAIL_OVERLAP_DETECTED`
 
-- Sealed external reserve: 4 DOI identities (Co 3, Mn 1).
-- Recovered historical Stage 5C pilot/development papers: 6 DOI identities (Fe 3, Ni 3).
-- DOI overlap between the 4 reserve papers and these 6 recovered historical pilot papers: **0**.
-- Full planned development set size recorded historically: **12 papers**.
-- Exact identities recovered from authoritative records: **6 of 12**.
-- Remaining development identities: **6 unresolved**.
+- The complete 12-paper development set is recovered (12/12 `CONFIRMED_MEMBER`) from `origin/codex/p0-real-development-set-v1@be2952d:benchmarks/real_development/manifest_v1.csv`.
+- Development (12) vs reserve (4): DOI overlap **0**, paper_id overlap **0** (the reserve has no paper_id column).
+- Known contamination (187) vs reserve (4): DOI overlap **4/4**.
+- The reserve is the consumed Blind-v1 set (`3DXR-001`…`3DXR-004`). It was evaluated on 2026-08-12 and marked `EXPOSED_AFTER_BLIND_V1` on 2026-08-17, and a post-hoc ligand failure analysis exists.
 
-## Interpretation
+Reports:
+- `benchmark/leakage_reports/dev_vs_sealed_reserve_with_known_contamination.json` (FAIL)
+- `benchmark/leakage_reports/dev_vs_sealed_reserve_dev_only.json` (PASS; development-only, not a formal blind PASS)
 
-The reserve passes the overlap check against all currently recovered historical pilot/development papers, but this is not sufficient to certify the formal blind benchmark because the complete 12-paper development manifest has not been reconstructed.
+## Superseded
 
-Do **not** report the reserve as contamination-clean relative to the complete development set until the remaining six development identities are recovered or a different prospective benchmark is frozen under a new protocol.
+The earlier partial status on this date reported 6/12 development identities recovered with PARTIAL_PASS. It is superseded by `development_manifest_recovery_status.md`.
 
 ## Governance
 
-The four reserve DOI/title identities may be used for staging and hash checks only. Gold values, evidence answers, and reaction-level target fields remain sealed. Do not tune the extractor, ligand resolver, verifier, prompts, mappings, or thresholds using these reserve papers.
+Do not open the reserve papers' Gold, predictions, scoring or failure-analysis files. Do not tune the extractor, ligand resolver, verifier, prompts, mappings or thresholds using these papers. A new blind is required (`NEW_BENCHMARK_EPOCH_PROPOSAL.md`).
