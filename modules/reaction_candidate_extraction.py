@@ -39,6 +39,11 @@ LIGANDS = (
     "DPPP", "DPPM", "Triphos",
 )
 LIGAND_RE = re.compile(r"\b(?:" + "|".join(map(re.escape, LIGANDS)) + r")\b", re.I)
+LIGAND_ALIAS_RE = re.compile(
+    r"\b(?:ligand|using|with|bearing|containing)\s+"
+    r"(?P<alias>L\d+[A-Za-z*′'\-]*)\b",
+    re.I,
+)
 
 SUBSTRATE_RE = re.compile(
     r"\b(?:aryl ketone|ketone|imine|alkene|olefin|aldehyde|ester|amide|"
@@ -79,6 +84,15 @@ def _first_text(pattern: re.Pattern, text: str) -> str | None:
     match = pattern.search(text)
     return match.group(0) if match else None
 
+
+
+def _first_ligand_mention(text: str) -> str | None:
+    """Return an explicit ligand name or a context-qualified paper-local alias."""
+    named = LIGAND_RE.search(text)
+    if named:
+        return named.group(0)
+    alias = LIGAND_ALIAS_RE.search(text)
+    return alias.group("alias") if alias else None
 
 def pressure_to_bar(value: float, unit: str) -> float:
     unit = unit.lower()
@@ -174,7 +188,7 @@ def extract_reaction_candidates(text: str, context_sentences: int = 2) -> list[R
             "temperature_c": _first_float(TEMP_RE, evidence),
             "reaction_time_h": _first_float(TIME_RE, evidence),
             "solvent": _first_text(SOLVENT_RE, evidence),
-            "ligand": _first_text(LIGAND_RE, evidence),
+            "ligand": _first_ligand_mention(evidence),
             "substrate_class": _first_text(SUBSTRATE_RE, evidence),
         }
 
