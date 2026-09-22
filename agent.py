@@ -12,8 +12,10 @@ import argparse
 import json
 from pathlib import Path
 
+from modules.extraction_verifier import verify_candidates
 from modules.reaction_candidate_extraction import candidates_to_dicts, extract_reaction_candidates
 from tools.run_benchmark import evaluate, load_jsonl
+from tools.run_trust_benchmark import evaluate as evaluate_trust
 
 
 def command_extract_text(args: argparse.Namespace) -> int:
@@ -39,6 +41,53 @@ def command_extract_text(args: argparse.Namespace) -> int:
 
 def command_benchmark(args: argparse.Namespace) -> int:
     results = evaluate(load_jsonl(Path(args.dataset)))
+    print(json.dumps(results, indent=2))
+    return 0
+
+
+def command_verify_text(args: argparse.Namespace) -> int:
+    input_path = Path(args.input)
+    text = input_path.read_text(encoding="utf-8")
+    candidates = extract_reaction_candidates(
+        text, context_sentences=args.context
+    )
+    verifications = verify_candidates(candidates, text)
+    payload = {
+        "agent": "Hydrogenation Literature Agent",
+        "extractor": "rule-baseline-v1",
+        "verifier": "evidence-verifier-v1",
+        "source": str(input_path),
+        "candidate_count": len(candidates),
+        "decision_counts": {
+            status: sum(
+                verification.overall_status == status
+                for verification in verifications
+            )
+            for status in ("accept", "review", "reject")
+        },
+        "records": [
+            {
+                "candidate": candidate.to_dict(),
+                "verification": verification.to_dict(),
+            }
+            for candidate, verification in zip(candidates, verifications)
+        ],
+    }
+
+    rendered = json.dumps(payload, indent=2, ensure_ascii=False)
+    if args.output:
+        Path(args.output).write_text(rendered + "\n", encoding="utf-8")
+        print(
+            f"Wrote {len(candidates)} verified candidate(s) "
+            f"to {args.output}"
+        )
+    else:
+        print(rendered)
+    return 0
+
+
+def command_trust_benchmark(args: argparse.Namespace) -> int:
+    results = evaluate_trust(load_jsonl(Path(args.dataset)))
     print(json.dumps(results, indent=2))
     return 0
 
@@ -71,6 +120,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="JSONL benchmark dataset",
     )
     benchmark_parser.set_defaults(func=command_benchmark)
+
+    verify_parser = subparsers.add_parser(
+        "verify-text",
+        help="Extract candidates and independently verify bound evidence.",
+    )
+    verify_parser.add_argument("--input", required=True, help="UTF-8 text file")
+    verify_parser.add_argument("--output", help="Optional JSON output path")
+    verify_parser.add_argument(
+        "--context", type=int, default=2,
+        help="Number of neighboring sentences to include around result anchors",
+    )
+    verify_parser.set_defaults(func=command_verify_text)
+
+    trust_parser = subparsers.add_parser(
+        "trust-benchmark",
+        help="Compare raw extraction with verifier-gated extraction.",
+    )
+    trust_parser.add_argument(
+        "--dataset", default="examples/benchmark_synthetic.jsonl",
+        help="JSONL benchmark dataset",
+    )
+    trust_parser.set_defaults(func=command_trust_benchmark)
 
     return parser
 
