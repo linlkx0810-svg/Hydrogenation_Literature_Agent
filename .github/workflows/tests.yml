@@ -39,4 +39,6 @@ jobs:
         run: python tools/run_trust_benchmark.py --dataset examples/benchmark_synthetic.jsonl
 
       - name: Smoke-test unified agent CLI
-        run: python agent.py benchmark --dataset examples/benchmark_synthetic.jsonl
+        run: |
+          python agent.py benchmark --dataset examples/benchmark_synthetic.jsonl
+          python agent.py trust-benchmark --dataset examples/benchmark_synthetic.jsonl
