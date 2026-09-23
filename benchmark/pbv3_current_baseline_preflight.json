@@ -1,0 +1,124 @@
+{
+  "report": "pbv3-identity-gate-preflight",
+  "date": "2026-09-23",
+  "role": "independent benchmark custodian",
+  "split": "prospective-blind-v3",
+  "target_cohort_size": 12,
+  "agent_repository_commit": "cb48b2d439b272b8c1740b0d1de197a01e3bc98f",
+  "unified_exclusion_registry_rows": 1971,
+  "unified_exclusion_registry_unique_doi": 1971,
+  "unified_exclusion_registry_exclude_rows": 1971,
+  "unified_exclusion_registry_identity_only_safe_rows": 0,
+  "unified_exclusion_registry_alias_rows": 106,
+  "unified_exclusion_registry_sha256": "6ef807a35a3f095d8e08b1a0259ad466fa2eb96539d36c9eb57bcc4c9eaafe61",
+  "unified_exclusion_registry_sources": {
+    "known_contamination_manifest.csv": 207,
+    "all_exposed_papers_registry.csv": 280,
+    "stage4h_forward_citation_screening_decisions.csv": 1119,
+    "fe_h2_ah_excluded.csv": 1754,
+    "ni_h2_ah_harmonised_literature_table_stage3h0.csv": 67,
+    "ni_h2_ah_excluded.csv": 27,
+    "frozen_stage2b_blind_excluded.csv": 22
+  },
+  "pbv2_reassessment": {
+    "total": 12,
+    "clean_retained": 5,
+    "contaminated": 6,
+    "exclude_uncertain": 1,
+    "removed": 7
+  },
+  "replacement_funnel": {
+    "bibliographic_discovery_pool": 211,
+    "after_exclusion_and_development_removal": 175,
+    "in_scope_journal_articles": 87,
+    "metal_named_primary_candidates": 11,
+    "rejected_alias_or_registry_hit": 2,
+    "rejected_non_experimental": 3,
+    "rejected_abstracting_service": 3,
+    "viable": 3,
+    "clean_after_exposure_scan": 2,
+    "exclude_uncertain": 1
+  },
+  "locked_clean_candidates": 7,
+  "cohort_shortfall": 5,
+  "metal_distribution": {
+    "Ni": 3,
+    "Mn": 3,
+    "Co": 1
+  },
+  "duplicate_count": 0,
+  "development_overlap_count": 0,
+  "historical_exposure_overlap_count": 0,
+  "current_baseline_exposure_count": 0,
+  "pr20_exposure_count": 0,
+  "identity_gate": "BLOCKED_INSUFFICIENT_CLEAN_CANDIDATES",
+  "reason_code": "PBV3_COHORT_UNDERFILLED",
+  "gate_attestation_created": false,
+  "identity_manifest_frozen": false,
+  "custodian_private_cohort_workfile_sha256": "56f81030c70457134c7684ae810c5c8352373d423ea802640d3d2a02b486244b",
+  "gold_generated": false,
+  "predictions_generated": false,
+  "resolver_run": false,
+  "scoring_run": false,
+  "blind_gold_opened": false,
+  "blind_chemistry_inspected": false,
+  "hardcoded_blind_doi_removed_from_developer_scripts": 2,
+  "per_locked_slot": [
+    {
+      "cohort_slot": "PBV3-001",
+      "origin": "RETAINED_FROM_PBV2",
+      "metal": "Ni",
+      "year": "2026",
+      "status": "CLEAN_LOCK_CANDIDATE",
+      "source_availability": "YES_FULL_HTML_VERIFIED"
+    },
+    {
+      "cohort_slot": "PBV3-002",
+      "origin": "RETAINED_FROM_PBV2",
+      "metal": "Mn",
+      "year": "2025",
+      "status": "CLEAN_LOCK_CANDIDATE",
+      "source_availability": "YES_FULL_HTML_VERIFIED"
+    },
+    {
+      "cohort_slot": "PBV3-003",
+      "origin": "RETAINED_FROM_PBV2",
+      "metal": "Ni",
+      "year": "2020",
+      "status": "CLEAN_LOCK_CANDIDATE",
+      "source_availability": "TRUE"
+    },
+    {
+      "cohort_slot": "PBV3-004",
+      "origin": "RETAINED_FROM_PBV2",
+      "metal": "Mn",
+      "year": "2025",
+      "status": "CLEAN_LOCK_CANDIDATE",
+      "source_availability": "YES_INSTITUTIONAL_FULL_PDF_VERIFIED"
+    },
+    {
+      "cohort_slot": "PBV3-005",
+      "origin": "RETAINED_FROM_PBV2",
+      "metal": "Co",
+      "year": "2024",
+      "status": "CLEAN_LOCK_CANDIDATE",
+      "source_availability": "YES_NSF_FULL_PDF_VERIFIED"
+    },
+    {
+      "cohort_slot": "PBV3-006",
+      "origin": "NEW_CANDIDATE",
+      "metal": "Ni",
+      "year": "2026",
+      "status": "CLEAN_LOCK_CANDIDATE",
+      "source_availability": "OA_LICENSE_METADATA_ONLY_NOT_ACQUIRED"
+    },
+    {
+      "cohort_slot": "PBV3-007",
+      "origin": "NEW_CANDIDATE",
+      "metal": "Mn",
+      "year": "2025",
+      "status": "CLEAN_LOCK_CANDIDATE",
+      "source_availability": "OA_LICENSE_METADATA_ONLY_NOT_ACQUIRED"
+    }
+  ]
+}
