@@ -1,6 +1,6 @@
 # Agent v1.0 formal execution graph
 
-Date: 2026-09-23. Status: specified, not yet satisfied by the code on this branch (see `docs/AGENT_V1_PIPELINE_AUDIT.md`).
+Date: 2026-09-23. Status: the first half of the graph (source → evidence builder → Raw LLM → frozen raw prediction) runs on this branch; normalization, verification and scoring are implemented as modules but not yet chained into one runner. See `docs/AGENT_V1_PIPELINE_AUDIT.md` and `benchmark/agent_v1_system_freeze_candidate.json`.
 
 ## The single formal graph
 
@@ -8,7 +8,7 @@ Date: 2026-09-23. Status: specified, not yet satisfied by the code on this branc
 frozen source artifact (article/SI PDF, hash-verified)
   → deterministic text extraction (pypdf, page order, no OCR)
   → evidence candidate builder            [reaction_candidate_extraction.extract_reaction_candidates]
-  → RAW LLM EXTRACTOR                     [llm_extractor.llm-extractor-v1, one chunk per call, strict JSON]
+  → RAW LLM EXTRACTOR                     [raw_llm_extractor_v2.llm-extractor-v2, one chunk per call, strict JSON]
   → raw prediction                        ← FROZEN AND HASHED HERE, before anything may read it
   → entity normalization                  [ligand_resolver.resolve_ligand_mention]
   → evidence verifier                     [extraction_verifier.evidence-verifier-v1, deterministic]
@@ -23,8 +23,10 @@ One line: `source → evidence builder → Raw LLM → frozen raw prediction →
 | Module | Role in v1.0 | Status |
 |---|---|---|
 | `modules/reaction_candidate_extraction.py` | evidence candidate builder | `ACTIVE_IN_FORMAL_RUN` (field values demoted, see below) |
-| `modules/llm_extractor.py` | Raw LLM extractor | `ACTIVE_IN_FORMAL_RUN` — **not present on this branch**, port required |
-| `modules/openai_responses_provider.py` | provider transport | `ACTIVE_IN_FORMAL_RUN` — **not present on this branch**, port required |
+| `modules/raw_llm_extractor_v2.py` | Raw LLM extractor (`llm-extractor-v2`, 12 fields) | `ACTIVE_IN_FORMAL_RUN` |
+| `tools/freeze_raw_predictions.py` | raw prediction freeze | `ACTIVE_IN_FORMAL_RUN` |
+| `modules/openai_responses_provider.py` | provider transport | `ACTIVE_IN_FORMAL_RUN` |
+| `modules/llm_extractor.py` (`llm-extractor-v1`, 8 fields) | historical implementation | `LEGACY_NOT_USED` |
 | `modules/ligand_resolver.py` | entity normalization | `ACTIVE_IN_FORMAL_RUN` |
 | `modules/extraction_verifier.py` | evidence verifier | `ACTIVE_IN_FORMAL_RUN` |
 | `modules/verifier.py` (LLM verifier-v1) | second-opinion verifier | `DEFERRED_TO_V1_1` — not in the v1.0 graph |
@@ -52,10 +54,14 @@ Its regex field values (`ee_percent` … `substrate_class`) and its `confidence`
 ### 2. Raw LLM extractor
 
 Input: one evidence chunk plus its provenance, nothing else — no other chunk, no paper-level context, no baseline value, no gold, no retrieval.
-Prompt: `llm-extractor-prompt-v1`, frozen.
+Prompt: `llm-extractor-prompt-v2`, frozen candidate.
 Output: strict JSON against the frozen response schema, every field nullable, no extra keys, no free text. A schema violation raises; it is never repaired into a prediction.
 
-The raw prediction file is written and hashed before normalization or verification runs. Nothing downstream may edit it. Raw metrics are computed from that file alone.
+The raw prediction file is written and hashed by `tools/freeze_raw_predictions.py` before normalization or verification runs; that tool also refuses records already marked verified, duplicate candidate ids, version drift, and any abstention reason attached to a field that carries a value. Nothing downstream may edit the file. Raw metrics are computed from it alone.
+
+Every null carries one of `not_reported`, `not_applicable`, `unresolved`, `ambiguous`, so the five value states of `FIELD_SCHEMA_V1` survive into scoring instead of collapsing into one null.
+
+Offline operation: `agent.py extract-raw` runs as a dry run that emits only request envelopes, or replays saved provider responses. CI exercises both, plus the freeze and its verification, without a model call.
 
 ### 3. Entity normalization
 

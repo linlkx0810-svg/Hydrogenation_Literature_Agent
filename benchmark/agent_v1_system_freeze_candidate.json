@@ -5,15 +5,14 @@
   "git_branch": "agent-v1-ligand-verifier",
   "git_commit": "cb48b2d439b272b8c1740b0d1de197a01e3bc98f",
   "scope_note": "Developer-side system definition only. It binds no blind cohort, authorizes no run, and must not be cited as an evaluation freeze. prospective-blind-v3 stands at 8/12 and remains custodian-sealed.",
-
   "readiness": {
     "execution_graph_unique": {
-      "state": "SPECIFIED_NOT_SATISFIED",
-      "detail": "docs/AGENT_V1_EXECUTION_GRAPH.md defines one graph, but two of its stages (llm_extractor, openai_responses_provider) are absent from this branch."
+      "state": "PARTIAL",
+      "detail": "source -> evidence builder -> Raw LLM v2 -> frozen raw prediction now runs offline via replay. Normalization, verification and scoring are not yet chained into one runner."
     },
     "raw_llm_definition_unique": {
-      "state": "SPECIFIED_NOT_SATISFIED",
-      "detail": "Raw is defined as llm-extractor-v1 output. tools/run_trust_benchmark.py still labels the deterministic rule baseline 'raw'."
+      "state": "YES",
+      "detail": "Raw is llm-extractor-v2 output, validated against raw-extraction-schema-v2 and frozen by tools/freeze_raw_predictions.py before anything downstream reads it. llm-extractor-v1 remains on the branch as LEGACY_NOT_USED."
     },
     "verifier_unique": {
       "state": "YES",
@@ -28,44 +27,51 @@
       "detail": "benchmark/SCORING_CONTRACT_V1.md is frozen as a specification; no scorer implements it yet."
     },
     "prompt_frozen": {
-      "state": "NO",
-      "detail": "llm-extractor-prompt-v1 exists only on the old freeze branch and its response schema covers 8 fields, not the 12 of FIELD_SCHEMA_V1."
+      "state": "YES_CANDIDATE",
+      "detail": "llm-extractor-prompt-v2 covers the 12 fields and the four abstention reasons; it is frozen as a candidate and any change creates llm-extractor-v3."
     },
     "model_frozen": {
       "state": "PARTIAL",
-      "detail": "Model id gpt-5.6-sol, Responses API, strict JSON, reasoning effort medium, temperature and top_p null, seed unsupported. OpenAI SDK version unresolved."
+      "detail": "Model gpt-5.6-sol, Responses API, strict JSON, reasoning effort medium, temperature and top_p null, seed unsupported. The OpenAI SDK version is still unresolved and no live call has been made."
     },
     "runtime_captured": {
       "state": "PARTIAL",
       "detail": "requirements-benchmark-lock.txt pins the deterministic stack. The openai package is absent, and one interpreter version must be chosen for the benchmark environment."
     },
     "cli_runnable": {
-      "state": "YES_DETERMINISTIC_ONLY",
-      "detail": "agent.py extract-text, verify-text, benchmark and trust-benchmark run without an API key. No CLI path reaches a model."
+      "state": "YES",
+      "detail": "agent.py extract-raw runs the chain as a dry run (request envelopes only) or as an offline replay; both are exercised in CI together with the freeze tool."
     },
     "regression_tests_pass": {
       "state": "YES",
       "detail": "Local suite green on synthetic fixtures and manifest invariants; no development-set or blind data is executed in CI."
     }
   },
-
   "blocking_gaps": [
-    "port modules/llm_extractor.py and modules/openai_responses_provider.py to this branch",
-    "revise the extractor response schema from the 8 legacy fields to the 12 fields of FIELD_SCHEMA_V1, which creates llm-extractor-v2 and a new prompt version",
+    "chain normalization, verification and scoring into one runner after the frozen raw prediction",
     "move ligand normalization out of extraction_verifier.py into its own graph stage",
     "implement a scorer that follows SCORING_CONTRACT_V1, keyed on candidate_id rather than list position",
     "stop labelling the rule baseline 'raw' in tools/run_trust_benchmark.py",
-    "pin the OpenAI SDK version and one Python version for the benchmark environment"
+    "pin the OpenAI SDK version and one Python version for the benchmark environment",
+    "make one live provider call outside CI to confirm the Responses adapter against gpt-5.6-sol"
   ],
-
   "validation_data_used": [
-    "examples/benchmark_synthetic.jsonl (synthetic fixtures)",
+    "examples/benchmark_synthetic.jsonl",
+    "examples/raw_chain_sample.txt with examples/raw_llm_replay_example.jsonl (synthetic replay, no model call)",
     "benchmark manifests committed in this repository"
   ],
   "validation_data_not_used": [
     "prospective-blind-v3 identities, manifests and sources",
     "any blind Gold or prediction"
   ],
-
-  "AGENT_V1_SYSTEM_FREEZE_READY": "NO"
+  "AGENT_V1_SYSTEM_FREEZE_READY": "NO",
+  "phase_a_legacy_port": {
+    "status": "LEGACY_PORT_VALIDATED",
+    "byte_identical": true,
+    "modules": [
+      "modules/llm_extractor.py",
+      "modules/openai_responses_provider.py"
+    ],
+    "doc": "docs/LLM_EXTRACTOR_LINEAGE_V1_TO_V2.md"
+  }
 }

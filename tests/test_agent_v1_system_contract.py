@@ -63,23 +63,37 @@ def test_scoring_contract_defines_raw_and_verifier_metrics():
 
 def test_execution_graph_names_one_verifier_and_one_raw_layer():
     text = (DOCS / "AGENT_V1_EXECUTION_GRAPH.md").read_text(encoding="utf-8")
-    assert text.count("ACTIVE_IN_FORMAL_RUN") == 5
-    assert "DEFERRED_TO_V1_1" in text
-    assert "LEGACY_NOT_USED" in text
-    assert "DEVELOPMENT_ONLY" in text
+    for marker in ("ACTIVE_IN_FORMAL_RUN", "DEFERRED_TO_V1_1", "LEGACY_NOT_USED", "DEVELOPMENT_ONLY"):
+        assert marker in text
     assert MANIFEST["verifier"]["version"] == "evidence-verifier-v1"
     assert MANIFEST["deferred_verifier"]["status"] == "DEFERRED_TO_V1_1"
-    assert MANIFEST["raw_llm_extractor"]["version"] == "llm-extractor-v1"
+    assert MANIFEST["raw_llm_extractor"]["version"] == "llm-extractor-v2"
+    assert MANIFEST["raw_llm_extractor"]["status"] == "ACTIVE_IN_FORMAL_RUN"
+    assert MANIFEST["legacy_raw_llm_extractor"]["version"] == "llm-extractor-v1"
+    assert MANIFEST["legacy_raw_llm_extractor"]["status"] == "LEGACY_NOT_USED"
+    assert MANIFEST["legacy_raw_llm_extractor"]["byte_identical_to_old_freeze"] is True
 
 
 def test_manifest_marks_unknowns_instead_of_guessing():
-    assert MANIFEST["raw_llm_extractor"]["status"] == UNRESOLVED
     assert MANIFEST["model_runtime"]["openai_sdk_version"] == UNRESOLVED
     assert MANIFEST["model_runtime"]["seed"] == "unsupported/unset"
     assert MANIFEST["candidate_builder"]["regex_field_values_role"].startswith("SELECTION_SIGNAL")
     assert MANIFEST["blind_binding"]["prospective_blind_v3"] == "NOT_BOUND"
-    for component in ("candidate_builder", "normalizer", "verifier"):
+    for component in ("candidate_builder", "normalizer", "verifier",
+                      "raw_llm_extractor", "legacy_raw_llm_extractor", "raw_prediction_freeze"):
         assert re.fullmatch(r"[0-9a-f]{40}", MANIFEST[component]["git_blob_sha"])
+
+
+def test_raw_stage_is_wired_and_field_driven():
+    from modules import raw_llm_extractor_v2 as raw
+
+    assert raw.FIELD_NAMES == tuple(f["name"] for f in SCHEMA["fields"])
+    assert MANIFEST["raw_llm_extractor"]["field_source_of_truth"] == "benchmark/FIELD_SCHEMA_V1.json"
+    assert MANIFEST["raw_prediction_freeze"]["status"] == "ACTIVE_IN_FORMAL_RUN"
+    assert FREEZE["phase_a_legacy_port"]["status"] == "LEGACY_PORT_VALIDATED"
+    assert FREEZE["phase_a_legacy_port"]["byte_identical"] is True
+    assert (ROOT / "examples/raw_chain_sample.txt").exists()
+    assert (ROOT / "examples/raw_llm_replay_example.jsonl").exists()
 
 
 def test_freeze_candidate_is_not_a_blind_freeze_and_is_honest_about_readiness():
