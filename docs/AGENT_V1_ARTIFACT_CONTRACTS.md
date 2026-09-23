@@ -59,29 +59,39 @@ Downstream stages must, before reading a single record: verify the file hash, ve
 
 Field policy: `ligand: ACTIVE`, every other field `PASS_THROUGH_V1`. Each field record keeps `raw_value` **and** `canonical_value`, plus `normalization_status` ∈ {`resolved`, `unresolved`, `ambiguous`, `not_applicable`, `not_reported`, `pass_through`}, `normalization_method`, `normalization_confidence`, `normalization_evidence`.
 
-### 5. Evidence verifier — `evidence-verifier-v1`
+### 5. Evidence verifier — `evidence-verifier-v1.1`
 
 | | |
 |---|---|
 | Input | frozen raw reference, the normalization record, the bound evidence window |
 | Output | `verified_predictions.jsonl` + `chain_manifest.json` |
-| Allowed | per field `supported`, `partial`, `unsupported`, `unresolved`, `ambiguous`, `not_checked_v1`; per candidate `accept`, `review`, `reject` |
+| Allowed | per field `supported`, `partial`, `unsupported`, `unresolved`, `ambiguous`, `not_checked_v1`, `not_verifiable_v1`; per candidate `accept`, `review`, `reject` |
 | Forbidden | resolving entities itself, producing a value the extractor did not produce, correcting chemistry, writing into the raw or normalized artifacts |
 
 The verifier no longer imports the resolver; a test asserts that. Called without a normalization record, the ligand comes back `unresolved` with reason `normalization_missing` rather than being quietly resolved.
 
-`evidence-verifier-v1` implements checks for 8 of the 12 fields. The four it cannot check — `reaction`, `catalyst`, `product`, `stereochemical_outcome` — are emitted as `not_checked_v1` with `checked_by_verifier: false`, so verifier coverage is visible in the artifact instead of being inferred.
+Coverage is governed by `benchmark/VERIFIER_COVERAGE_V1.json`, which gives every field exactly one mode: `FULL_EVIDENCE_CHECK`, `NORMALIZATION_AWARE_CHECK`, `LITERAL_EVIDENCE_CHECK`, `EXPLICIT_STEREO_CHECK` or `NOT_CHECKED_V1`. `reaction` is `NOT_CHECKED_V1`: there is no reaction canonicalizer in v1 and a substring test would not be verification. `catalyst` and `product` accept only a literal mention and can never block. `stereochemical_outcome` reads explicit descriptors only and blocks only on an explicitly contradictory configuration.
 
-### 6. Scorer — `agent-v1-scorer-v1`
+Each verified row carries `raw_value`, `raw_state`, `canonical_value`, `verification_status`, `checked_by_verifier` and `final_action` ∈ {`retain`, `suppress`, `flag_review`, `pass_through_unchecked`}.
+
+The four layers are distinct and must not be conflated:
+
+```text
+Raw LLM prediction  ≠  normalization output  ≠  verifier verdict  ≠  final stream
+```
+
+and, in particular, **unchecked pass-through is not a verified answer**. A value with `final_action = pass_through_unchecked` reaches the consumer labelled `UNVERIFIED_PASS_THROUGH`.
+
+### 6. Scorer — `agent-v1-scorer-v2`
 
 | | |
 |---|---|
 | Input | frozen raw records, verified records, gold records |
 | Output | `score_report.json` |
-| Allowed | paired Raw vs Verified metrics per `SCORING_CONTRACT_V1`, per field and overall |
+| Allowed | four separate accounts per `SCORING_CONTRACT_V1`: raw extractor, verifier-checked subset, unchecked and unverifiable accounting, final stream |
 | Forbidden | writing into any upstream artifact; joining by position; counting `unresolved` or `ambiguous` as incorrect; reporting verifier benefit as an accuracy delta |
 
-A field is treated as withheld by the verifier only when its status is `unsupported`, `unresolved` or `ambiguous`. `not_checked_v1` is not a withholding, and it is excluded from the verifier's support-rate denominator.
+A field is withheld only when its `final_action` is `suppress`. `not_checked_v1` and `not_verifiable_v1` are not withholdings, and both are excluded from every verifier denominator. The scorer reports four separate accounts — raw extractor, verifier-checked subset, unchecked and unverifiable accounting, and final stream — with the denominators defined in `benchmark/SCORING_CONTRACT_V1.md`.
 
 ## Join rule
 

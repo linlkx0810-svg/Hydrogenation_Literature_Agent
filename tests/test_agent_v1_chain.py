@@ -159,8 +159,12 @@ def test_chain_run_leaves_the_raw_artifact_byte_identical(tmp_path):
     assert normalized[0]["fields"]["ligand"]["raw_value"] == "L3"
     assert normalized[0]["fields"]["ligand"]["canonical_value"] == "SEGPHOS"
     assert {f["field"] for f in verified[0]["fields"]} == set(FIELD_NAMES)
-    unchecked = {f["field"] for f in verified[0]["fields"] if not f["checked_by_verifier"]}
-    assert unchecked == {"reaction", "catalyst", "product", "stereochemical_outcome"}
+    row = {f["field"]: f for f in verified[0]["fields"]}
+    assert row["reaction"]["verification_status"] == "not_checked_v1"
+    assert row["reaction"]["final_action"] == "pass_through_unchecked"
+    assert row["ligand"]["raw_value"] == "L3"
+    assert row["ligand"]["canonical_value"] == "SEGPHOS"
+    assert row["ligand"]["raw_state"] == "answered"
 
 
 def test_chain_refuses_a_source_that_does_not_reproduce_the_frozen_evidence(tmp_path):
@@ -200,8 +204,8 @@ def test_scorer_joins_on_candidate_id_not_position(tmp_path):
     gold = [_gold("rxn-0002", solvent="THF"), _gold("rxn-0001")]
     report = score_agent_v1.score(records, list(reversed(verified)), gold)
     assert report["n_chunks_scored"] == 2
-    assert report["raw"]["incorrect"] == 0
-    assert report["raw"]["correct"] == 16
+    assert report["a_raw_extractor"]["incorrect"] == 0
+    assert report["a_raw_extractor"]["correct"] == 16
 
 
 def test_scorer_state_semantics_and_verifier_reporting(tmp_path):
@@ -211,28 +215,24 @@ def test_scorer_state_semantics_and_verifier_reporting(tmp_path):
     records, _ = load_frozen_raw(raw, manifest_path)
 
     report = score_agent_v1.score(records, verified, [_gold()])
-    assert report["raw"]["not_applicable_excluded"] == 1
-    assert report["raw"]["correct"] == 8
-    assert report["raw"]["n_pairs"] == 11
-    assert report["verifier"]["n_fields_checked"] == 8
-    assert set(report["verifier"]["fields_not_checked_by_verifier_v1"]) == {
-        "reaction",
-        "catalyst",
-        "product",
-        "stereochemical_outcome",
-    }
-    assert report["verifier"]["correct_value_retention"] == 1.0
+    assert report["a_raw_extractor"]["not_applicable_excluded"] == 1
+    assert report["a_raw_extractor"]["correct"] == 8
+    assert report["a_raw_extractor"]["n_pairs"] == 11
+    assert report["b_verifier_checked_subset"]["verifier_checked_units"] <= report[
+        "b_verifier_checked_subset"]["verifier_eligible_units"]
+    assert report["b_verifier_checked_subset"]["correct_value_retention"] == 1.0
+    assert report["c_unchecked_and_unverifiable"]["not_checked_v1_by_field"] == {"reaction": 1}
     assert report["join_key"] == "candidate_id"
 
     wrong = _gold()
     wrong["fields"]["yield"] = 42.0
     report = score_agent_v1.score(records, verified, [wrong])
-    assert report["raw"]["incorrect"] == 1
-    assert report["verified"]["incorrect"] == 1, (
+    assert report["a_raw_extractor"]["incorrect"] == 1
+    assert report["d_final_stream"]["final_incorrect"] == 1, (
         "the verifier found the value supported by the evidence, so it must not be "
         "silently withheld or corrected"
     )
-    assert report["verifier"]["n_raw_incorrect"] == 1
+    assert report["b_verifier_checked_subset"]["n_raw_incorrect_in_subset"] == 1
 
 
 def test_unresolved_is_never_counted_as_incorrect(tmp_path):
@@ -244,6 +244,6 @@ def test_unresolved_is_never_counted_as_incorrect(tmp_path):
     record = records[0]
     record["abstention_reasons"]["ligand"] = "unresolved"
     report = score_agent_v1.score([record], verified, [_gold()])
-    assert report["raw"]["unresolved"] == 1
-    assert report["raw"]["incorrect"] == 0
-    assert report["raw"]["miss"] == 0
+    assert report["a_raw_extractor"]["unresolved"] == 1
+    assert report["a_raw_extractor"]["incorrect"] == 0
+    assert report["a_raw_extractor"]["miss"] == 0

@@ -16,7 +16,7 @@
     },
     "verifier_unique": {
       "state": "YES",
-      "detail": "evidence-verifier-v1 is the only verifier in the graph and no longer normalizes; a test asserts it does not import the resolver. It checks 8 of the 12 fields and reports the other four as not_checked_v1."
+      "detail": "evidence-verifier-v1.1 is the only verifier, it does not normalize, and its coverage is frozen in VERIFIER_COVERAGE_V1 with one mode per field. reaction stays NOT_CHECKED_V1 by policy."
     },
     "field_schema_frozen": {
       "state": "YES",
@@ -24,7 +24,7 @@
     },
     "scoring_contract_frozen": {
       "state": "YES",
-      "detail": "tools/score_agent_v1.py implements SCORING_CONTRACT_V1: candidate_id join, five value states, paired Raw vs Verified metrics, verifier benefit as block rate plus retention."
+      "detail": "agent-v1-scorer-v2 reports four separate accounts with explicit denominators and no single verified accuracy."
     },
     "prompt_frozen": {
       "state": "YES_CANDIDATE",
@@ -45,14 +45,18 @@
     "regression_tests_pass": {
       "state": "YES",
       "detail": "Local suite green on synthetic fixtures and manifest invariants; no development-set or blind data is executed in CI."
+    },
+    "verifier_coverage_contract": {
+      "state": "VERIFIER_COVERAGE_CONTRACT_FROZEN",
+      "detail": "11 of 12 fields have a verifier; reaction is explicitly excluded. catalyst and product accept only literal evidence and can never block; stereochemical_outcome reads explicit descriptors only. Coverage is reported as a rate over candidate x field units."
     }
   },
   "blocking_gaps": [
-    "extend evidence-verifier-v1 to the four unchecked fields (reaction, catalyst, product, stereochemical_outcome) or state their exclusion in the reported metrics",
-    "stop labelling the rule baseline 'raw' in tools/run_trust_benchmark.py",
-    "pin the OpenAI SDK version and one Python version for the benchmark environment",
-    "make one live provider call outside CI to confirm the Responses adapter against gpt-5.6-sol",
-    "produce a development-set gold file in the FIELD_SCHEMA_V1 format before any scientific claim"
+    "OpenAI SDK exact version is not frozen",
+    "the benchmark Python runtime is not pinned to one interpreter version",
+    "no live provider call has been made against gpt-5.6-sol",
+    "no development-set gold exists in the FIELD_SCHEMA_V1 format",
+    "chemical identity comparators are string-level only: substrate and solvent verdicts depend on the candidate builder's controlled vocabularies, and catalyst and product accept only literal mentions"
   ],
   "validation_data_used": [
     "examples/benchmark_synthetic.jsonl",
@@ -86,5 +90,10 @@
     "raw_immutable_after_freeze": true,
     "join_key": "candidate_id",
     "fail_closed": true
+  },
+  "terminology": {
+    "rule_baseline_tool": "tools/run_trust_benchmark.py reports rule_baseline, not raw",
+    "formal_raw_llm": "llm-extractor-v2 only",
+    "historical_files_rewritten": false
   }
 }

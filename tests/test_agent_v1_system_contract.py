@@ -65,7 +65,8 @@ def test_execution_graph_names_one_verifier_and_one_raw_layer():
     text = (DOCS / "AGENT_V1_EXECUTION_GRAPH.md").read_text(encoding="utf-8")
     for marker in ("ACTIVE_IN_FORMAL_RUN", "DEFERRED_TO_V1_1", "LEGACY_NOT_USED", "DEVELOPMENT_ONLY"):
         assert marker in text
-    assert MANIFEST["verifier"]["version"] == "evidence-verifier-v1"
+    assert MANIFEST["verifier"]["version"] == "evidence-verifier-v1.1"
+    assert MANIFEST["verifier"]["verifier_coverage_contract"] == "verifier-coverage-contract-v1"
     assert MANIFEST["deferred_verifier"]["status"] == "DEFERRED_TO_V1_1"
     assert MANIFEST["raw_llm_extractor"]["version"] == "llm-extractor-v2"
     assert MANIFEST["raw_llm_extractor"]["status"] == "ACTIVE_IN_FORMAL_RUN"

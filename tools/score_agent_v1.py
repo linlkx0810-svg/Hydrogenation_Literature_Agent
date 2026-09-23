@@ -1,4 +1,7 @@
-"""Score Raw and Verified predictions under `benchmark/SCORING_CONTRACT_V1.md`.
+"""Score Raw, verifier-checked subset, unchecked accounting and final stream.
+
+Contracts: `benchmark/SCORING_CONTRACT_V1.md` and
+`benchmark/VERIFIER_COVERAGE_V1.json`.
 
 Inputs are joined on `candidate_id`, never on list position:
 
@@ -10,7 +13,9 @@ Gold field values may be a plain value, or an object carrying a state:
 `{"value": null, "state": "not_reported"}` with state in
 `answered | not_reported | not_applicable`.
 
-The scorer writes `score_report.json`. It never writes to the raw artifact.
+The report deliberately contains no single "verified accuracy": raw extractor
+performance, the verifier-checked subset and the final stream a consumer
+receives are three different denominators and are reported separately.
 """
 from __future__ import annotations
 
@@ -26,16 +31,20 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from modules.artifact_chain import FrozenArtifactError, load_frozen_raw  # noqa: E402
+from modules.field_verifiers import (  # noqa: E402
+    COVERAGE_CONTRACT,
+    NOT_CHECKED,
+    NOT_VERIFIABLE,
+)
 from modules.raw_llm_extractor_v2 import FIELD_NAMES  # noqa: E402
 
-SCORER_VERSION = "agent-v1-scorer-v1"
+SCORER_VERSION = "agent-v1-scorer-v2"
 CONTRACT = "scoring-contract-v1"
 ABSTENTION_STATES = {"not_reported", "unresolved", "ambiguous", "not_applicable"}
-WITHHELD_STATUSES = {"unsupported", "unresolved", "ambiguous"}
 NUMERIC_TOLERANCE = 1e-4
 
 
-def _read_jsonl(path: Path) -> list[dict]:
+def _read_jsonl(path) -> list[dict]:
     return [
         json.loads(line)
         for line in Path(path).read_text(encoding="utf-8").splitlines()
@@ -51,9 +60,8 @@ def _gold_entry(raw) -> tuple[object, str]:
 
 def _equal(prediction, gold) -> bool:
     if isinstance(prediction, dict) and isinstance(gold, dict):
-        return (
-            prediction.get("kind") == gold.get("kind")
-            and _equal(prediction.get("value"), gold.get("value"))
+        return prediction.get("kind") == gold.get("kind") and _equal(
+            prediction.get("value"), gold.get("value")
         )
     if isinstance(prediction, (int, float)) and isinstance(gold, (int, float)):
         return math.isclose(float(prediction), float(gold), rel_tol=0.0, abs_tol=NUMERIC_TOLERANCE)
@@ -81,12 +89,16 @@ def _outcome(prediction, abstention_reason, gold_value, gold_state):
     return "miss" if gold_state == "answered" else "abstain_reasonable"
 
 
+def _gold_present(counts: Counter) -> int:
+    return counts["correct"] + counts["incorrect"] + counts["miss"] + counts["abstain_unnecessary"]
+
+
 def _metrics(counts: Counter) -> dict:
     correct = counts["correct"]
     incorrect = counts["incorrect"]
     hallucinated = counts["hallucinated"]
     answered = correct + incorrect + hallucinated
-    gold_present = correct + incorrect + counts["miss"] + counts["abstain_unnecessary"]
+    gold_present = _gold_present(counts)
     gold_absent = hallucinated + counts["abstain_reasonable"]
     evaluable = gold_present + gold_absent
     return {
@@ -116,14 +128,25 @@ def _metrics(counts: Counter) -> dict:
 
 
 def score(raw_records, verified_rows, gold_rows) -> dict:
+    """Four separate accounts, never mixed.
+
+    A. raw extractor metrics over all 12 fields
+    B. verifier-checked subset
+    C. unchecked and unverifiable accounting
+    D. final stream, i.e. what a consumer actually receives
+    """
     gold_by_id = {row["candidate_id"]: row["fields"] for row in gold_rows}
     verified_by_id = {row["candidate_id"]: row for row in verified_rows}
 
-    raw_counts, ver_counts = Counter(), Counter()
+    raw_counts, checked_counts, final_counts = Counter(), Counter(), Counter()
     raw_by_field = defaultdict(Counter)
-    ver_by_field = defaultdict(Counter)
+    final_by_field = defaultdict(Counter)
+    coverage = Counter()
+    unchecked = Counter()
+    unverifiable = Counter()
+    supported = unsupported = checked_units = 0
     withheld_wrong = withheld_right = raw_wrong = raw_right = 0
-    supported = verified_fields = unsupported = 0
+    unverified_pass_through = 0
     scored_ids, missing_gold = [], []
 
     for record in raw_records:
@@ -133,18 +156,8 @@ def score(raw_records, verified_rows, gold_rows) -> dict:
             continue
         scored_ids.append(cid)
         gold_fields = gold_by_id[cid]
-        verification = verified_by_id.get(cid)
-        statuses = {}
-        if verification:
-            for field in verification["fields"]:
-                statuses[field["field"]] = field["status"]
-                if not field.get("checked_by_verifier", True):
-                    continue
-                verified_fields += 1
-                if field["status"] == "supported":
-                    supported += 1
-                elif field["status"] == "unsupported":
-                    unsupported += 1
+        verification = verified_by_id.get(cid) or {}
+        rows = {row["field"]: row for row in verification.get("fields", [])}
 
         for name in FIELD_NAMES:
             if name not in gold_fields:
@@ -152,67 +165,129 @@ def score(raw_records, verified_rows, gold_rows) -> dict:
             gold_value, gold_state = _gold_entry(gold_fields[name])
             raw_value = record["values"].get(name)
             reason = record.get("abstention_reasons", {}).get(name)
+            row = rows.get(name, {})
+            status = row.get("verification_status") or row.get("status")
+            action = row.get("final_action", "retain")
+            checked = bool(row.get("checked_by_verifier"))
 
             raw_outcome = _outcome(raw_value, reason, gold_value, gold_state)
             raw_counts[raw_outcome] += 1
             raw_by_field[name][raw_outcome] += 1
 
-            status = statuses.get(name)
-            withheld = status in WITHHELD_STATUSES
-            if raw_value is not None and gold_state == "answered":
-                if raw_outcome == "correct":
-                    raw_right += 1
-                    withheld_right += 1 if withheld else 0
-                elif raw_outcome == "incorrect":
-                    raw_wrong += 1
-                    withheld_wrong += 1 if withheld else 0
+            if gold_state != "not_applicable":
+                coverage["evaluable_units"] += 1
+                if checked:
+                    coverage["checked_units"] += 1
 
-            if withheld:
-                ver_value, ver_reason = None, (status if status in ABSTENTION_STATES else "unresolved")
+            if checked:
+                checked_units += 1
+                if status == "supported":
+                    supported += 1
+                elif status == "unsupported":
+                    unsupported += 1
+                checked_counts[raw_outcome] += 1
+                if raw_value is not None and gold_state == "answered":
+                    blocked = action == "suppress"
+                    if raw_outcome == "correct":
+                        raw_right += 1
+                        withheld_right += 1 if blocked else 0
+                    elif raw_outcome == "incorrect":
+                        raw_wrong += 1
+                        withheld_wrong += 1 if blocked else 0
+
+            if status == NOT_CHECKED:
+                unchecked[name] += 1
+            elif status == NOT_VERIFIABLE and raw_value is not None:
+                unverifiable[name] += 1
+
+            if action == "suppress":
+                final_value = None
+                final_reason = status if status in ABSTENTION_STATES else "unresolved"
             else:
-                ver_value, ver_reason = raw_value, reason
-            ver_outcome = _outcome(ver_value, ver_reason, gold_value, gold_state)
-            ver_counts[ver_outcome] += 1
-            ver_by_field[name][ver_outcome] += 1
+                final_value, final_reason = raw_value, reason
+                if raw_value is not None and (
+                    not checked or status in {NOT_CHECKED, NOT_VERIFIABLE}
+                ):
+                    unverified_pass_through += 1
+            final_outcome = _outcome(final_value, final_reason, gold_value, gold_state)
+            final_counts[final_outcome] += 1
+            final_by_field[name][final_outcome] += 1
 
-    report = {
+    evaluable = coverage["evaluable_units"]
+    checked_total = coverage["checked_units"]
+    final_answered = (
+        final_counts["correct"] + final_counts["incorrect"] + final_counts["hallucinated"]
+    )
+
+    return {
         "scorer_version": SCORER_VERSION,
         "scoring_contract": CONTRACT,
+        "verifier_coverage_contract": COVERAGE_CONTRACT["contract_version"],
+        "verifier_version": COVERAGE_CONTRACT["verifier_version"],
         "evaluation_unit": "reaction_candidate_chunk x field",
         "join_key": "candidate_id",
         "n_chunks_scored": len(scored_ids),
         "n_chunks_without_gold": len(missing_gold),
         "chunks_without_gold": sorted(missing_gold),
-        "raw": _metrics(raw_counts),
-        "verified": _metrics(ver_counts),
-        "verifier": {
-            "n_fields_checked": verified_fields,
-            "fields_not_checked_by_verifier_v1": sorted(
-                {
-                    field["field"]
-                    for row in verified_rows
-                    for field in row["fields"]
-                    if not field.get("checked_by_verifier", True)
-                }
-            ),
-            "evidence_support_rate": _safe(supported, verified_fields),
-            "unsupported_answer_rate": _safe(unsupported, verified_fields),
+        "a_raw_extractor": {
+            "scope": "all 12 fields of FIELD_SCHEMA_V1; this is extractor performance",
+            "raw_end_to_end_accuracy": _safe(raw_counts["correct"], _gold_present(raw_counts)),
+            **_metrics(raw_counts),
+        },
+        "b_verifier_checked_subset": {
+            "scope": "only candidate x field units with checked_by_verifier = true",
+            "verifier_eligible_units": evaluable,
+            "verifier_checked_units": checked_total,
+            "verifier_coverage_rate": _safe(checked_total, evaluable),
+            "evidence_support_rate": _safe(supported, checked_units),
+            "unsupported_answer_rate": _safe(unsupported, checked_units),
             "wrong_value_block_rate": _safe(withheld_wrong, raw_wrong),
             "correct_value_retention": _safe(raw_right - withheld_right, raw_right),
-            "n_raw_incorrect": raw_wrong,
-            "n_raw_correct": raw_right,
+            "n_raw_incorrect_in_subset": raw_wrong,
+            "n_raw_correct_in_subset": raw_right,
+            "verifier_checked_subset_selective_accuracy": _safe(
+                checked_counts["correct"],
+                checked_counts["correct"] + checked_counts["incorrect"],
+            ),
+        },
+        "c_unchecked_and_unverifiable": {
+            "scope": "units the verifier did not or could not adjudicate; excluded from every verifier denominator",
+            "not_checked_v1_count": sum(unchecked.values()),
+            "not_verifiable_v1_count": sum(unverifiable.values()),
+            "not_checked_v1_by_field": dict(unchecked),
+            "not_verifiable_v1_by_field": dict(unverifiable),
+            "rule": "not checked is not unsupported; not verifiable is not incorrect",
+        },
+        "d_final_stream": {
+            "scope": "what a consumer receives after verifier actions, including unverified pass-through",
+            "final_coverage": _safe(final_answered, evaluable),
+            "final_correct": final_counts["correct"],
+            "final_incorrect": final_counts["incorrect"],
+            "final_selective_accuracy": _safe(
+                final_counts["correct"], final_counts["correct"] + final_counts["incorrect"]
+            ),
+            "final_stream_end_to_end_accuracy": _safe(
+                final_counts["correct"], _gold_present(final_counts)
+            ),
+            "unverified_pass_through_units": unverified_pass_through,
+            "unverified_pass_through_label": "UNVERIFIED_PASS_THROUGH",
+            "suppressed_units": final_counts["unresolved"] + final_counts["ambiguous"],
+            **_metrics(final_counts),
         },
         "field_breakdown": {
-            name: {"raw": _metrics(raw_by_field[name]), "verified": _metrics(ver_by_field[name])}
+            name: {
+                "raw": _metrics(raw_by_field[name]),
+                "final_stream": _metrics(final_by_field[name]),
+            }
             for name in FIELD_NAMES
             if raw_by_field[name]
         },
-        "interpretation_rule": (
-            "Verifier benefit is the pair (wrong_value_block_rate, correct_value_retention). "
-            "A higher selective accuracy obtained by answering less is not an improvement."
-        ),
+        "interpretation_rules": [
+            "Verifier benefit is the pair (wrong_value_block_rate, correct_value_retention); a higher selective accuracy obtained by answering less is not an improvement.",
+            "d_final_stream includes values the verifier never checked; they are counted as UNVERIFIED_PASS_THROUGH and must not be described as verified.",
+            "This report contains no single 'verified accuracy' on purpose: A, B and D have different denominators.",
+        ],
     }
-    return report
 
 
 def main() -> int:

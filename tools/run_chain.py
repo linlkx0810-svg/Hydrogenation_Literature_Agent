@@ -21,6 +21,14 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from modules.artifact_chain import FrozenArtifactError, load_frozen_raw  # noqa: E402
 from modules.extraction_verifier import verify_candidate  # noqa: E402
+from modules.field_verifiers import (  # noqa: E402
+    CHECKED_FIELDS,
+    COVERAGE_CONTRACT,
+    FIELD_MODES,
+    NOT_CHECKED,
+    NOT_VERIFIABLE,
+    verify_extended_field,
+)
 from modules.prediction_normalizer import (  # noqa: E402
     NORMALIZER_VERSION,
     normalize_record,
@@ -28,8 +36,18 @@ from modules.prediction_normalizer import (  # noqa: E402
 from modules.raw_llm_extractor_v2 import FIELD_NAMES  # noqa: E402
 from modules.reaction_candidate_extraction import ReactionCandidate  # noqa: E402
 
-CHAIN_VERSION = "agent-v1-chain-runner-v1"
-NOT_CHECKED = "not_checked_v1"
+CHAIN_VERSION = "agent-v1-chain-runner-v2"
+VERIFIER_VERSION = COVERAGE_CONTRACT["verifier_version"]
+
+FINAL_ACTION = {
+    "supported": "retain",
+    "partial": "flag_review",
+    "unsupported": "suppress",
+    "unresolved": "suppress",
+    "ambiguous": "suppress",
+    NOT_VERIFIABLE: "flag_review",
+    NOT_CHECKED: "pass_through_unchecked",
+}
 
 _LEGACY_FIELD_MAP = {
     "ee_percent": ("ee_or_er", "ee"),
@@ -73,36 +91,70 @@ def _candidate_from_normalized(record, normalized) -> ReactionCandidate:
 
 
 def _verified_fields(verification, record, normalized) -> list[dict]:
-    """Re-express verification outcomes in FIELD_SCHEMA_V1 field names.
+    """One row per FIELD_SCHEMA_V1 field, under the verifier coverage contract.
 
-    `evidence-verifier-v1` checks only the eight legacy quantities. The fields it
-    has no check for are reported as `not_checked_v1` rather than being left out,
-    so a reader can see the verifier's coverage instead of inferring it.
+    Each row keeps the raw value and raw state next to the canonical value and
+    the verdict, so nothing downstream has to guess which layer a number came
+    from. `final_action` says what happens to the value in the final stream.
     """
     legacy_to_schema = {legacy: field for legacy, (field, _) in _LEGACY_FIELD_MAP.items()}
-    checked: dict[str, dict] = {}
+    verdicts: dict[str, dict] = {}
     for result in verification.fields:
         schema_name = legacy_to_schema.get(result.field, result.field)
-        entry = result.to_dict()
-        entry["field"] = schema_name
-        entry["checked_by_verifier"] = True
-        checked[schema_name] = entry
+        verdicts[schema_name] = {
+            "status": result.status,
+            "reason": result.reason,
+            "evidence_text": result.evidence_text,
+            "canonical_id": result.canonical_id,
+            "canonical_name": result.canonical_name,
+        }
+
+    evidence = record and normalized and verification.fields
+    evidence_text = verification.fields[0].evidence_text if verification.fields else ""
+    raw_values = record["values"]
+    raw_reasons = record.get("abstention_reasons", {})
 
     rows = []
     for name in FIELD_NAMES:
-        if name in checked:
-            rows.append(checked[name])
-            continue
+        raw_value = raw_values.get(name)
+        raw_state = "answered" if raw_value is not None else (
+            raw_reasons.get(name) or "not_reported"
+        )
+        normalization = normalized.fields.get(name)
+        canonical_value = normalized.canonical(name)
+        mode = FIELD_MODES.get(name, NOT_CHECKED)
+        checked = CHECKED_FIELDS.get(name, False)
+
+        if raw_value is None:
+            status = NOT_VERIFIABLE if checked else NOT_CHECKED
+            reason = "No raw value to verify."
+        elif name in verdicts:
+            status = verdicts[name]["status"]
+            reason = verdicts[name]["reason"]
+        elif name in ("catalyst", "product", "stereochemical_outcome"):
+            verdict = verify_extended_field(name, canonical_value, evidence_text)
+            status, reason = verdict.status, verdict.reason
+        elif name == "ee_or_er" and isinstance(raw_value, dict) and raw_value.get("kind") != "ee_percent":
+            status = NOT_VERIFIABLE
+            reason = "An er ratio is not converted to ee by this check."
+        else:
+            status = NOT_CHECKED
+            reason = "No verifier exists for this field in v1."
+
         rows.append(
             {
                 "field": name,
-                "value": normalized.canonical(name),
-                "status": NOT_CHECKED,
-                "reason": "evidence-verifier-v1 implements no evidence check for this field.",
-                "evidence_text": "",
-                "canonical_id": None,
-                "canonical_name": None,
-                "checked_by_verifier": False,
+                "coverage_mode": mode,
+                "raw_value": raw_value,
+                "raw_state": raw_state,
+                "canonical_value": canonical_value,
+                "normalization_status": (
+                    normalization.normalization_status if normalization else None
+                ),
+                "verification_status": status,
+                "reason": reason,
+                "checked_by_verifier": bool(checked and raw_value is not None),
+                "final_action": FINAL_ACTION.get(status, "flag_review"),
             }
         )
     return rows
@@ -138,7 +190,8 @@ def run(raw_path: Path, freeze_path: Path, source_path: Path, out_dir: Path) -> 
                 "source_artifact_id": record["source_artifact_id"],
                 "raw_predictions_sha256": manifest["raw_predictions_sha256"],
                 "normalizer_version": NORMALIZER_VERSION,
-                "verifier_version": "evidence-verifier-v1",
+                "verifier_version": VERIFIER_VERSION,
+                "verifier_coverage_contract": COVERAGE_CONTRACT["contract_version"],
                 "evidence_integrity": verification.evidence_integrity,
                 "overall_status": verification.overall_status,
                 "fields": _verified_fields(verification, record, normalized),
@@ -163,7 +216,8 @@ def run(raw_path: Path, freeze_path: Path, source_path: Path, out_dir: Path) -> 
         "candidate_ids_sha256": manifest["candidate_ids_sha256"],
         "record_count": len(records),
         "normalizer_version": NORMALIZER_VERSION,
-        "verifier_version": "evidence-verifier-v1",
+        "verifier_version": VERIFIER_VERSION,
+        "verifier_coverage_contract": COVERAGE_CONTRACT["contract_version"],
         "normalized_predictions": normalized_path.name,
         "normalized_predictions_sha256": _sha(normalized_path),
         "verified_predictions": verified_path.name,

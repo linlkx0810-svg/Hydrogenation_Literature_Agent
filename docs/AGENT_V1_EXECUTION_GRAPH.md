@@ -11,7 +11,7 @@ frozen source artifact (article/SI PDF, hash-verified)
   → RAW LLM EXTRACTOR                     [raw_llm_extractor_v2.llm-extractor-v2, one chunk per call, strict JSON]
   → raw prediction                        ← FROZEN AND HASHED HERE, before anything may read it
   → entity normalization                  [ligand_resolver.resolve_ligand_mention]
-  → evidence verifier                     [extraction_verifier.evidence-verifier-v1, deterministic]
+  → evidence verifier                     [evidence-verifier-v1.1, deterministic, coverage contract v1]
   → verified prediction
   → scorer                                [field-atomic, FIELD_SCHEMA_V1 + SCORING_CONTRACT_V1]
 ```
@@ -32,7 +32,8 @@ One line: `source → evidence builder → Raw LLM → frozen raw prediction →
 | `modules/artifact_chain.py` | fail-closed frozen-artifact loader | `ACTIVE_IN_FORMAL_RUN` |
 | `tools/run_chain.py` | normalization + verification runner | `ACTIVE_IN_FORMAL_RUN` |
 | `tools/score_agent_v1.py` | scorer implementing `SCORING_CONTRACT_V1` | `ACTIVE_IN_FORMAL_RUN` |
-| `modules/extraction_verifier.py` | evidence verifier | `ACTIVE_IN_FORMAL_RUN` |
+| `modules/extraction_verifier.py` | evidence verifier, 8 legacy quantities | `ACTIVE_IN_FORMAL_RUN` |
+| `modules/field_verifiers.py` | conservative checks for catalyst, product, stereochemical_outcome | `ACTIVE_IN_FORMAL_RUN` |
 | `modules/verifier.py` (LLM verifier-v1) | second-opinion verifier | `DEFERRED_TO_V1_1` — not in the v1.0 graph |
 | `modules/reaction_data_extraction.py` | paper-level Stage 5 extractor | `LEGACY_NOT_USED` |
 | `modules/literature_search.py`, `pdf_download.py`, `title_abstract_screening.py`, `fulltext_screening.py` | corpus construction | `DEVELOPMENT_ONLY` |
@@ -83,9 +84,9 @@ Normalization is a separate record. It annotates the raw value; it does not repl
 
 Deterministic. Inputs: one normalized field value and the exact evidence window bound to its candidate. First it re-slices `source_text[start:end]` and compares it to the stored evidence: on mismatch or invalid offsets every field of that candidate is `unsupported` and the candidate is rejected.
 
-Allowed per-field outcomes: `supported`, `partial`, `unsupported`, `unresolved`, `ambiguous`, `not_checked_v1`.
+Allowed per-field outcomes: `supported`, `partial`, `unsupported`, `unresolved`, `ambiguous`, `not_checked_v1`, `not_verifiable_v1`.
 
-`evidence-verifier-v1` implements checks for 8 of the 12 fields. `reaction`, `catalyst`, `product` and `stereochemical_outcome` are emitted as `not_checked_v1` with `checked_by_verifier: false`; they are excluded from the verifier's support-rate denominator and are never treated as withheld.
+Coverage is frozen in `benchmark/VERIFIER_COVERAGE_V1.json`: one mode per field, 11 fields with a verifier and `reaction` explicitly excluded. `not_checked_v1` and `not_verifiable_v1` are excluded from every verifier denominator and are never treated as withheld; only `final_action = suppress` withholds a value.
 Allowed per-candidate routing: `accept`, `review`, `reject`.
 
 The verifier may not produce a value that the extractor did not produce. It has no authority to correct chemistry, only to withhold it.

@@ -69,35 +69,58 @@
     "status": "ACTIVE_IN_FORMAL_RUN"
   },
   "verifier": {
-    "version": "evidence-verifier-v1",
-    "module_path": "modules/extraction_verifier.py",
+    "version": "evidence-verifier-v1.1",
+    "verifier_coverage_contract": "verifier-coverage-contract-v1",
+    "coverage_contract_path": "benchmark/VERIFIER_COVERAGE_V1.json",
+    "module_paths": [
+      "modules/extraction_verifier.py",
+      "modules/field_verifiers.py"
+    ],
     "git_blob_sha": "bd8f824ccd74ce0a89b50a1baaec844fa7b7090f",
+    "extended_checks_git_blob_sha": "87ba780a1dcacd698968a8005467090ca424f475",
     "kind": "deterministic",
     "calls_model": false,
     "may_replace_values": false,
+    "normalizes": false,
+    "performs_recovery_extraction": false,
     "field_outcomes": [
       "supported",
       "partial",
       "unsupported",
       "unresolved",
       "ambiguous",
-      "not_checked_v1"
+      "not_checked_v1",
+      "not_verifiable_v1"
+    ],
+    "final_actions": [
+      "retain",
+      "suppress",
+      "flag_review",
+      "pass_through_unchecked"
     ],
     "candidate_routing": [
       "accept",
       "review",
       "reject"
     ],
-    "open_defect": "resolved: normalization moved out of the verifier into prediction-normalizer-v1",
-    "status": "ACTIVE_IN_FORMAL_RUN",
-    "normalizes": false,
-    "fields_checked": 8,
-    "fields_not_checked": [
-      "reaction",
-      "catalyst",
-      "product",
-      "stereochemical_outcome"
-    ]
+    "checked_field_modes": {
+      "catalyst": "LITERAL_EVIDENCE_CHECK",
+      "ligand": "NORMALIZATION_AWARE_CHECK",
+      "substrate": "LITERAL_EVIDENCE_CHECK",
+      "product": "LITERAL_EVIDENCE_CHECK",
+      "h2_pressure": "FULL_EVIDENCE_CHECK",
+      "temperature": "FULL_EVIDENCE_CHECK",
+      "reaction_time": "FULL_EVIDENCE_CHECK",
+      "solvent": "LITERAL_EVIDENCE_CHECK",
+      "yield": "FULL_EVIDENCE_CHECK",
+      "ee_or_er": "FULL_EVIDENCE_CHECK",
+      "stereochemical_outcome": "EXPLICIT_STEREO_CHECK"
+    },
+    "unchecked_field_modes": {
+      "reaction": "NOT_CHECKED_V1"
+    },
+    "coverage_note": "Coverage is reported as verifier_coverage_rate over candidate x field units, not as a fields fraction.",
+    "status": "ACTIVE_IN_FORMAL_RUN"
   },
   "deferred_verifier": {
     "version": "verifier-v1",
@@ -119,8 +142,15 @@
     "version": "scoring-contract-v1",
     "scorer_implementation": "tools/score_agent_v1.py",
     "status": "ACTIVE_IN_FORMAL_RUN",
-    "scorer_version": "agent-v1-scorer-v1",
-    "scorer_git_blob_sha": "304f7969bb54e5f6867e6973af156e9983cf5fce"
+    "scorer_version": "agent-v1-scorer-v2",
+    "scorer_git_blob_sha": "eed69ac8786a0315089752aa3afb1bf320402697",
+    "accounts": [
+      "a_raw_extractor",
+      "b_verifier_checked_subset",
+      "c_unchecked_and_unverifiable",
+      "d_final_stream"
+    ],
+    "single_verified_accuracy_metric": false
   },
   "dependency_versions": {
     "lock_file": "requirements-benchmark-lock.txt",
@@ -159,9 +189,9 @@
   },
   "artifact_contracts_doc": "docs/AGENT_V1_ARTIFACT_CONTRACTS.md",
   "chain_runner": {
-    "version": "agent-v1-chain-runner-v1",
+    "version": "agent-v1-chain-runner-v2",
     "tool_path": "tools/run_chain.py",
-    "git_blob_sha": "9b4c830ecb5a21d9dae195f20ad4507ad3e96653",
+    "git_blob_sha": "e2402f080ec75c61098c7b41f0f1cbf333f7dfbe",
     "artifacts": [
       "normalized_predictions.jsonl",
       "verified_predictions.jsonl",
@@ -184,5 +214,14 @@
     ],
     "behaviour_on_mismatch": "fail closed",
     "status": "ACTIVE_IN_FORMAL_RUN"
+  },
+  "engineering_benchmarks": {
+    "tools/run_trust_benchmark.py": {
+      "system_under_test": "rule-baseline-v1 (deterministic regex extractor)",
+      "former_label": "raw",
+      "current_label": "rule_baseline / rule_baseline_verified",
+      "note": "This tool never evaluated the Raw LLM. Historical report files keep their original labels and are not rewritten.",
+      "status": "DEVELOPMENT_ONLY"
+    }
   }
 }

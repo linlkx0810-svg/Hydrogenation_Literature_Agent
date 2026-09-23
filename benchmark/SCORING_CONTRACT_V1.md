@@ -69,3 +69,45 @@ Raw predictions are written and hashed before normalization and verification run
 - Report the number of chunks and the number of source papers separately; a paper is not a scoring unit.
 - Never report a single scalar "accuracy" for the system without its coverage.
 - Metrics computed under any earlier schema are not comparable and must not be placed in the same table.
+
+## Verifier eligibility and coverage denominators
+
+`benchmark/VERIFIER_COVERAGE_V1.json` assigns every field exactly one coverage mode. Three counts follow from it, and every verifier metric names which one it divides by.
+
+| Count | Definition |
+|---|---|
+| `verifier_eligible_units` | chunk x field pairs that survive the `not_applicable` filter |
+| `verifier_checked_units` | those pairs where `checked_by_verifier` is true, i.e. the field has a verifier and the raw value is non-null |
+| `verifier_coverage_rate` | `verifier_checked_units / verifier_eligible_units` |
+
+Report coverage as a rate over units. "8 of 12 fields" is not a coverage statement, because fields differ in how often they carry a value.
+
+## Two status vocabularies, never merged
+
+Raw prediction state: `answered`, `unresolved`, `ambiguous`, `not_reported`, `not_applicable`.
+Verifier verdict: `supported`, `partial`, `unsupported`, `unresolved`, `ambiguous`, `not_checked_v1`, `not_verifiable_v1`.
+
+A raw answer of `answered` with a verdict of `not_verifiable_v1` is a normal, legal combination.
+
+- `not_checked_v1`: the field has no verifier in the contract, for example `reaction`.
+- `not_verifiable_v1`: the field has a verifier, but this case's evidence representation does not allow a reliable verdict, for example a product drawn only in a scheme.
+
+Neither is an error, and neither enters the verifier's support-rate denominator. Not checked is not unsupported; not verifiable is not incorrect.
+
+## Four separate accounts
+
+The report from `tools/score_agent_v1.py` keeps these apart on purpose.
+
+**A. `a_raw_extractor`** — all 12 fields against gold. Denominator: all evaluable pairs. This is extractor performance and the headline number is `raw_end_to_end_accuracy`.
+
+**B. `b_verifier_checked_subset`** — only pairs with `checked_by_verifier = true`. Denominator: `verifier_checked_units`. Carries `evidence_support_rate`, `unsupported_answer_rate`, `wrong_value_block_rate`, `correct_value_retention` and `verifier_checked_subset_selective_accuracy`.
+
+**C. `c_unchecked_and_unverifiable`** — counts of `not_checked_v1` and `not_verifiable_v1`, with a per-field breakdown. These never appear in a B denominator.
+
+**D. `d_final_stream`** — what a consumer receives after the verifier's `final_action`. Denominator: all evaluable pairs. `unverified_pass_through_units` counts values that reach the consumer without a verifier verdict; they are labelled `UNVERIFIED_PASS_THROUGH` and must never be described as verified. The headline number is `final_stream_end_to_end_accuracy`.
+
+There is deliberately no single `verified_accuracy` in the report. Use `raw_end_to_end_accuracy`, `verifier_checked_subset_selective_accuracy` or `final_stream_end_to_end_accuracy`, and say which one.
+
+## Final actions
+
+`retain`, `suppress`, `flag_review`, `pass_through_unchecked`. Only `suppress` removes a value from the final stream. `pass_through_unchecked` keeps a raw answer that no verifier examined.
