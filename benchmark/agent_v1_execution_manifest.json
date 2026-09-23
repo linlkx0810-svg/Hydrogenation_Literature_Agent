@@ -1,0 +1,116 @@
+{
+  "manifest_version": "agent-v1-execution-manifest-v1",
+  "date": "2026-09-23",
+  "agent_version": "agent-v1.0-candidate",
+  "git_branch": "agent-v1-ligand-verifier",
+  "git_commit": "cb48b2d439b272b8c1740b0d1de197a01e3bc98f",
+  "execution_graph_doc": "docs/AGENT_V1_EXECUTION_GRAPH.md",
+  "evaluation_unit": "reaction_candidate_chunk x field",
+
+  "candidate_builder": {
+    "module_path": "modules/reaction_candidate_extraction.py",
+    "function": "extract_reaction_candidates",
+    "git_blob_sha": "cb9f5b38ff143834e656665a3a3961b8539899c3",
+    "policy": "anchor sentence matching the ee or yield regex, context_sentences=2, duplicate windows dropped on (start,end)",
+    "context_sentences": 2,
+    "candidate_selection": "ALL_DETERMINISTIC_CANDIDATES",
+    "manual_target_selection": false,
+    "ocr_allowed": false,
+    "regex_field_values_role": "SELECTION_SIGNAL_AND_RULE_BASELINE_ONLY_NOT_SCORED_AS_AGENT_OUTPUT",
+    "status": "ACTIVE_IN_FORMAL_RUN"
+  },
+
+  "raw_llm_extractor": {
+    "version": "llm-extractor-v1",
+    "prompt_version": "llm-extractor-prompt-v1",
+    "module_path": "modules/llm_extractor.py",
+    "git_blob_sha_on_old_freeze_branch": "b4aeff654824bd2d23f23b77920a9f8487917f27",
+    "present_on_this_branch": false,
+    "structured_output_schema": "UNRESOLVED_BEFORE_FREEZE: llm-extractor-v1 RESPONSE_SCHEMA covers the old 8 fields; FIELD_SCHEMA_V1 defines 12. Porting plus a schema revision creates llm-extractor-v2.",
+    "status": "UNRESOLVED_BEFORE_FREEZE"
+  },
+
+  "model_runtime": {
+    "provider": "OpenAI",
+    "api_family": "Responses API",
+    "model_id": "gpt-5.6-sol",
+    "provider_adapter_version": "openai-responses-json-v1",
+    "provider_adapter_path": "modules/openai_responses_provider.py",
+    "provider_adapter_git_blob_sha_on_old_freeze_branch": "56519bf43d7b267d83023ca6491a7686bd48a9d9",
+    "present_on_this_branch": false,
+    "structured_output": "strict_json_schema",
+    "reasoning_effort": "medium",
+    "temperature": null,
+    "top_p": null,
+    "seed": "unsupported/unset",
+    "seed_note": "The Responses API exposes no deterministic seed for this model. Reproducibility is claimed only for the deterministic stages.",
+    "openai_sdk_version": "UNRESOLVED_BEFORE_FREEZE",
+    "status": "UNRESOLVED_BEFORE_FREEZE"
+  },
+
+  "normalizer": {
+    "version": "ligand-resolver-v1",
+    "module_path": "modules/ligand_resolver.py",
+    "git_blob_sha": "101b53e2968dddf733cab775066ab9cd22c511c8",
+    "canonical_registry_entries": 17,
+    "policy": "explicit name resolves; paper-local alias resolves only from an explicit in-source definition; conflict is ambiguous; undefined alias is unresolved; no cross-paper inference",
+    "status": "ACTIVE_IN_FORMAL_RUN"
+  },
+
+  "verifier": {
+    "version": "evidence-verifier-v1",
+    "module_path": "modules/extraction_verifier.py",
+    "git_blob_sha": "12a0d5a3270de1071de8a4abccf682d3302e34cf",
+    "kind": "deterministic",
+    "calls_model": false,
+    "may_replace_values": false,
+    "field_outcomes": ["supported", "partial", "unsupported", "unresolved", "ambiguous"],
+    "candidate_routing": ["accept", "review", "reject"],
+    "open_defect": "normalization is currently invoked inside the verifier and the resolver status 'resolved' is renamed to 'supported'; the graph requires normalization as its own stage",
+    "status": "ACTIVE_IN_FORMAL_RUN"
+  },
+
+  "deferred_verifier": {
+    "version": "verifier-v1",
+    "module_path": "modules/verifier.py",
+    "git_blob_sha_on_old_freeze_branch": "7733e1f7697a35b9d72541cd591803edaa896350",
+    "kind": "llm",
+    "status": "DEFERRED_TO_V1_1"
+  },
+
+  "field_schema": {
+    "path": "benchmark/FIELD_SCHEMA_V1.json",
+    "version": "agent-v1-field-schema-v1",
+    "field_count": 12,
+    "aggregate_conditions_field": false,
+    "selectivity_option": "B",
+    "status": "FROZEN_CANDIDATE"
+  },
+
+  "scoring_contract": {
+    "path": "benchmark/SCORING_CONTRACT_V1.md",
+    "version": "scoring-contract-v1",
+    "scorer_implementation": "UNRESOLVED_BEFORE_FREEZE: tools/score_blind_benchmark.py predates FIELD_SCHEMA_V1 and tools/run_trust_benchmark.py is a synthetic contract check, not the formal scorer",
+    "status": "FROZEN_CANDIDATE"
+  },
+
+  "dependency_versions": {
+    "lock_file": "requirements-benchmark-lock.txt",
+    "python": "3.14.7 (local capture); CI matrix 3.10, 3.11, 3.12",
+    "pypdf": "6.19.0",
+    "pytest": "8.4.2",
+    "pandas": "3.0.6",
+    "numpy": "2.5.3",
+    "openpyxl": "3.1.5",
+    "PyYAML": "6.0.3",
+    "requests": "2.34.2",
+    "openai": "UNRESOLVED_BEFORE_FREEZE",
+    "pydantic": "not_installed_not_used",
+    "note": "The benchmark environment must pin one Python version before a live run; the CI matrix is not a benchmark environment."
+  },
+
+  "blind_binding": {
+    "prospective_blind_v3": "NOT_BOUND",
+    "note": "This manifest describes the developer-side system only. No blind identity, manifest or source was read while producing it."
+  }
+}

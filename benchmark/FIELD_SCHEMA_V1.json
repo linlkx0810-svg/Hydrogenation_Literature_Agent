@@ -1,0 +1,138 @@
+{
+  "schema_version": "agent-v1-field-schema-v1",
+  "date": "2026-09-23",
+  "evaluation_unit": "reaction_candidate_chunk x field",
+  "supersedes": [
+    "prospective-blind-v2 8-field scientific list (ee_percent, yield_percent, h2_pressure_bar, temperature_c, reaction_time_h, solvent, ligand, substrate_class)",
+    "PR #20 documentation 8 high-level fields (reaction, catalyst, ligand, substrate, product, conditions, yield, selectivity)"
+  ],
+  "aggregate_conditions_field": false,
+  "selectivity_option": "B",
+  "selectivity_option_note": "Selectivity is split into a numeric enantioselectivity field and a separate stereochemical outcome field. A compound 'selectivity' field is not scored.",
+  "field_count": 12,
+  "fields": [
+    {
+      "name": "reaction",
+      "type": "categorical_text",
+      "definition": "The transformation performed in this candidate, as a controlled reaction type (for example asymmetric hydrogenation of a C=O, C=N or C=C bond).",
+      "unit": null,
+      "canonicalization": "controlled vocabulary; case-insensitive match after whitespace normalization",
+      "evidence_requirement": "the reaction type must be stated or unambiguously named in the bound evidence window",
+      "scored": true
+    },
+    {
+      "name": "catalyst",
+      "type": "entity",
+      "definition": "Metal precursor or isolated precatalyst used for this candidate reaction.",
+      "unit": null,
+      "canonicalization": "exact string match after whitespace and case normalization; no structure inference in v1.0",
+      "evidence_requirement": "named in the bound evidence window",
+      "scored": true
+    },
+    {
+      "name": "ligand",
+      "type": "entity",
+      "definition": "Chiral ligand used for this candidate reaction.",
+      "unit": null,
+      "canonicalization": "modules/ligand_resolver.py canonical_id; paper-local aliases resolve only from an explicit in-source definition",
+      "evidence_requirement": "mention in the bound evidence window plus, for an alias, an explicit definition in the same source document",
+      "scored": true
+    },
+    {
+      "name": "substrate",
+      "type": "entity_or_class",
+      "definition": "Substrate of this candidate reaction, as named or as its class when the source gives only a class.",
+      "unit": null,
+      "canonicalization": "exact string match after normalization; class-level answers are scored against class-level gold only",
+      "evidence_requirement": "named in the bound evidence window",
+      "scored": true
+    },
+    {
+      "name": "product",
+      "type": "entity_or_class",
+      "definition": "Product of this candidate reaction.",
+      "unit": null,
+      "canonicalization": "exact string match after normalization",
+      "evidence_requirement": "named in the bound evidence window",
+      "scored": true
+    },
+    {
+      "name": "h2_pressure",
+      "type": "numeric",
+      "definition": "Molecular hydrogen pressure for this candidate reaction.",
+      "unit": "bar",
+      "canonicalization": "converted to bar only when the source unit is explicit (bar, atm, psi, MPa, kPa); tolerance abs 5e-4",
+      "evidence_requirement": "value and unit present in the bound evidence window",
+      "scored": true
+    },
+    {
+      "name": "temperature",
+      "type": "numeric",
+      "definition": "Reaction temperature.",
+      "unit": "degree_celsius",
+      "canonicalization": "numeric, tolerance abs 1e-4; a non-numeric report such as room temperature is not coerced and is recorded as not_reported_numerically",
+      "evidence_requirement": "value present in the bound evidence window",
+      "scored": true
+    },
+    {
+      "name": "reaction_time",
+      "type": "numeric",
+      "definition": "Reaction time.",
+      "unit": "hour",
+      "canonicalization": "numeric, tolerance abs 1e-4; minutes converted only when the unit is explicit",
+      "evidence_requirement": "value present in the bound evidence window",
+      "scored": true
+    },
+    {
+      "name": "solvent",
+      "type": "categorical_text",
+      "definition": "Reaction solvent.",
+      "unit": null,
+      "canonicalization": "controlled solvent vocabulary, case-insensitive; mixtures are recorded verbatim and scored as a single string",
+      "evidence_requirement": "named in the bound evidence window",
+      "scored": true
+    },
+    {
+      "name": "yield",
+      "type": "numeric",
+      "definition": "Reported yield for this candidate reaction.",
+      "unit": "percent",
+      "canonicalization": "numeric 0-100, tolerance abs 1e-4; conversion is not yield and is recorded as not_applicable for this field",
+      "evidence_requirement": "value present in the bound evidence window",
+      "scored": true
+    },
+    {
+      "name": "ee_or_er",
+      "type": "numeric_with_kind",
+      "definition": "Enantioselectivity as reported: either ee in percent or er as a ratio.",
+      "unit": "percent_ee_or_ratio_er",
+      "canonicalization": "the reported kind is preserved; er is converted to ee only when the ratio is explicit and unambiguous; tolerance abs 1e-4 after conversion",
+      "evidence_requirement": "value present in the bound evidence window",
+      "scored": true
+    },
+    {
+      "name": "stereochemical_outcome",
+      "type": "categorical_text",
+      "definition": "Absolute configuration or the designated major enantiomer, when the source states it.",
+      "unit": null,
+      "canonicalization": "controlled tokens R, S, (R), (S), and source-specific descriptors preserved verbatim; never inferred from the ee value",
+      "evidence_requirement": "stated in the bound evidence window",
+      "scored": true
+    }
+  ],
+  "value_states": {
+    "answered": "a value was produced and is scoreable",
+    "not_reported": "the source does not report this field for this reaction; gold is null and a null prediction is correct abstention",
+    "not_applicable": "the field cannot exist for this reaction type; excluded from all denominators",
+    "unresolved": "an identity or value was mentioned but could not be resolved from the source; excluded from coverage, never counted as incorrect",
+    "ambiguous": "the source supports more than one mutually exclusive reading; excluded from coverage, never counted as incorrect"
+  },
+  "value_state_rules": [
+    "unresolved is not incorrect",
+    "unresolved does not count toward answer coverage",
+    "ambiguous is not incorrect and does not count toward answer coverage",
+    "not_applicable is removed from every denominator",
+    "not_reported with a null prediction is a correct abstention, not an answer",
+    "a null prediction against a non-null gold is a miss, not an error of value"
+  ]
+}
