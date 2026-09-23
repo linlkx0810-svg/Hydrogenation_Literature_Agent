@@ -1,18 +1,18 @@
 """Independent evidence verifier for extracted reaction candidates.
 
-The verifier does not generate new chemistry values. It only checks whether a
-candidate value is directly supported by its bound evidence window. Ligand aliases
-are resolved only from explicit source definitions.
+The verifier does not generate new chemistry values and it does not normalize.
+It only checks whether a candidate value is directly supported by its bound
+evidence window. Entity resolution happens earlier, in
+`modules.prediction_normalizer`; the verifier consumes that record and never
+calls the resolver itself. Passing no normalization record is allowed, and then
+the ligand is reported `unresolved` with reason `normalization_missing` rather
+than being silently resolved here.
 """
 from __future__ import annotations
 import math
 from dataclasses import asdict, dataclass
 from typing import Any
 
-from modules.ligand_resolver import (
-    extract_alias_definitions,
-    resolve_ligand_mention,
-)
 from modules.reaction_candidate_extraction import (
     EE_RE,
     PRESSURE_RE,
@@ -106,8 +106,13 @@ def _integrity(candidate, source_text: str) -> tuple[str, str]:
     )
 
 
-def verify_candidate(candidate, source_text: str) -> CandidateVerification:
-    """Verify one candidate strictly against its attached evidence window."""
+def verify_candidate(candidate, source_text: str, normalization=None) -> CandidateVerification:
+    """Verify one candidate strictly against its attached evidence window.
+
+    ``normalization`` is the record produced by `modules.prediction_normalizer`
+    for this candidate. The verifier reads the ligand's resolution status from
+    it; it never resolves anything itself.
+    """
     integrity, evidence = _integrity(candidate, source_text)
     results: list[FieldVerification] = []
     fields = (
@@ -212,25 +217,39 @@ def verify_candidate(candidate, source_text: str) -> CandidateVerification:
 
     ligand = getattr(candidate, "ligand", None)
     if ligand:
-        resolution = resolve_ligand_mention(
-            ligand,
-            source_text,
-            extract_alias_definitions(source_text),
-        )
-        status = "supported" if resolution.status == "resolved" else resolution.status
-        results.append(
-            FieldVerification(
-                "ligand",
-                ligand,
-                status,
-                f"Ligand resolved via {resolution.resolution_method}."
-                if status == "supported"
-                else resolution.note,
-                resolution.evidence_text or evidence,
-                resolution.canonical_id,
-                resolution.canonical_name,
+        entry = None
+        if normalization is not None:
+            fields_map = getattr(normalization, "fields", None)
+            entry = fields_map.get("ligand") if fields_map else None
+        if entry is None:
+            results.append(
+                FieldVerification(
+                    "ligand",
+                    ligand,
+                    "unresolved",
+                    "normalization_missing: no normalization record was supplied "
+                    "for this candidate, and the verifier does not normalize.",
+                    evidence,
+                )
             )
-        )
+        else:
+            status = (
+                "supported"
+                if entry.normalization_status == "resolved"
+                else entry.normalization_status
+            )
+            results.append(
+                FieldVerification(
+                    "ligand",
+                    entry.raw_value,
+                    status,
+                    f"Ligand normalization status {entry.normalization_status} "
+                    f"via {entry.normalization_method}.",
+                    entry.normalization_evidence or evidence,
+                    None,
+                    entry.canonical_value,
+                )
+            )
 
     statuses = {result.status for result in results}
     if "unsupported" in statuses:
@@ -248,5 +267,14 @@ def verify_candidate(candidate, source_text: str) -> CandidateVerification:
     )
 
 
-def verify_candidates(candidates, source_text: str) -> list[CandidateVerification]:
-    return [verify_candidate(candidate, source_text) for candidate in candidates]
+def verify_candidates(candidates, source_text: str, normalizations=None) -> list[CandidateVerification]:
+    """Verify many candidates. ``normalizations`` maps candidate_id -> record."""
+    normalizations = normalizations or {}
+    return [
+        verify_candidate(
+            candidate,
+            source_text,
+            normalizations.get(getattr(candidate, "candidate_id", "")),
+        )
+        for candidate in candidates
+    ]

@@ -7,8 +7,8 @@
   "scope_note": "Developer-side system definition only. It binds no blind cohort, authorizes no run, and must not be cited as an evaluation freeze. prospective-blind-v3 stands at 8/12 and remains custodian-sealed.",
   "readiness": {
     "execution_graph_unique": {
-      "state": "PARTIAL",
-      "detail": "source -> evidence builder -> Raw LLM v2 -> frozen raw prediction now runs offline via replay. Normalization, verification and scoring are not yet chained into one runner."
+      "state": "YES",
+      "detail": "The whole chain runs offline: source -> evidence builder -> Raw LLM v2 -> frozen raw -> normalization -> evidence verifier -> scorer. agent.py exposes extract-raw, run-chain and score; CI runs all of them and asserts the raw artifact is unchanged afterwards."
     },
     "raw_llm_definition_unique": {
       "state": "YES",
@@ -16,15 +16,15 @@
     },
     "verifier_unique": {
       "state": "YES",
-      "detail": "evidence-verifier-v1 is the formal verifier; the LLM verifier-v1 is DEFERRED_TO_V1_1. One open defect: normalization is invoked inside the verifier instead of being its own stage."
+      "detail": "evidence-verifier-v1 is the only verifier in the graph and no longer normalizes; a test asserts it does not import the resolver. It checks 8 of the 12 fields and reports the other four as not_checked_v1."
     },
     "field_schema_frozen": {
       "state": "YES",
       "detail": "benchmark/FIELD_SCHEMA_V1.json, 12 atomic fields, no aggregate conditions field, selectivity option B."
     },
     "scoring_contract_frozen": {
-      "state": "YES_SPEC_ONLY",
-      "detail": "benchmark/SCORING_CONTRACT_V1.md is frozen as a specification; no scorer implements it yet."
+      "state": "YES",
+      "detail": "tools/score_agent_v1.py implements SCORING_CONTRACT_V1: candidate_id join, five value states, paired Raw vs Verified metrics, verifier benefit as block rate plus retention."
     },
     "prompt_frozen": {
       "state": "YES_CANDIDATE",
@@ -48,12 +48,11 @@
     }
   },
   "blocking_gaps": [
-    "chain normalization, verification and scoring into one runner after the frozen raw prediction",
-    "move ligand normalization out of extraction_verifier.py into its own graph stage",
-    "implement a scorer that follows SCORING_CONTRACT_V1, keyed on candidate_id rather than list position",
+    "extend evidence-verifier-v1 to the four unchecked fields (reaction, catalyst, product, stereochemical_outcome) or state their exclusion in the reported metrics",
     "stop labelling the rule baseline 'raw' in tools/run_trust_benchmark.py",
     "pin the OpenAI SDK version and one Python version for the benchmark environment",
-    "make one live provider call outside CI to confirm the Responses adapter against gpt-5.6-sol"
+    "make one live provider call outside CI to confirm the Responses adapter against gpt-5.6-sol",
+    "produce a development-set gold file in the FIELD_SCHEMA_V1 format before any scientific claim"
   ],
   "validation_data_used": [
     "examples/benchmark_synthetic.jsonl",
@@ -73,5 +72,19 @@
       "modules/openai_responses_provider.py"
     ],
     "doc": "docs/LLM_EXTRACTOR_LINEAGE_V1_TO_V2.md"
+  },
+  "artifact_chain": {
+    "documented_in": "docs/AGENT_V1_ARTIFACT_CONTRACTS.md",
+    "artifacts": [
+      "raw_predictions.jsonl",
+      "raw_predictions.freeze.json",
+      "normalized_predictions.jsonl",
+      "verified_predictions.jsonl",
+      "chain_manifest.json",
+      "score_report.json"
+    ],
+    "raw_immutable_after_freeze": true,
+    "join_key": "candidate_id",
+    "fail_closed": true
   }
 }

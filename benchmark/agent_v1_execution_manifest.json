@@ -57,17 +57,21 @@
     "provider_adapter_git_blob_sha": "56519bf43d7b267d83023ca6491a7686bd48a9d9"
   },
   "normalizer": {
-    "version": "ligand-resolver-v1",
-    "module_path": "modules/ligand_resolver.py",
-    "git_blob_sha": "101b53e2968dddf733cab775066ab9cd22c511c8",
-    "canonical_registry_entries": 17,
+    "version": "prediction-normalizer-v1",
+    "module_path": "modules/prediction_normalizer.py",
+    "git_blob_sha": "cbbc30be4f7ab31d6258f568c5c7bce3365e93a2",
+    "active_fields": [
+      "ligand"
+    ],
+    "other_fields": "PASS_THROUGH_V1",
+    "keeps_raw_and_canonical": true,
     "policy": "explicit name resolves; paper-local alias resolves only from an explicit in-source definition; conflict is ambiguous; undefined alias is unresolved; no cross-paper inference",
     "status": "ACTIVE_IN_FORMAL_RUN"
   },
   "verifier": {
     "version": "evidence-verifier-v1",
     "module_path": "modules/extraction_verifier.py",
-    "git_blob_sha": "12a0d5a3270de1071de8a4abccf682d3302e34cf",
+    "git_blob_sha": "bd8f824ccd74ce0a89b50a1baaec844fa7b7090f",
     "kind": "deterministic",
     "calls_model": false,
     "may_replace_values": false,
@@ -76,15 +80,24 @@
       "partial",
       "unsupported",
       "unresolved",
-      "ambiguous"
+      "ambiguous",
+      "not_checked_v1"
     ],
     "candidate_routing": [
       "accept",
       "review",
       "reject"
     ],
-    "open_defect": "normalization is currently invoked inside the verifier and the resolver status 'resolved' is renamed to 'supported'; the graph requires normalization as its own stage",
-    "status": "ACTIVE_IN_FORMAL_RUN"
+    "open_defect": "resolved: normalization moved out of the verifier into prediction-normalizer-v1",
+    "status": "ACTIVE_IN_FORMAL_RUN",
+    "normalizes": false,
+    "fields_checked": 8,
+    "fields_not_checked": [
+      "reaction",
+      "catalyst",
+      "product",
+      "stereochemical_outcome"
+    ]
   },
   "deferred_verifier": {
     "version": "verifier-v1",
@@ -104,8 +117,10 @@
   "scoring_contract": {
     "path": "benchmark/SCORING_CONTRACT_V1.md",
     "version": "scoring-contract-v1",
-    "scorer_implementation": "UNRESOLVED_BEFORE_FREEZE: tools/score_blind_benchmark.py predates FIELD_SCHEMA_V1 and tools/run_trust_benchmark.py is a synthetic contract check, not the formal scorer",
-    "status": "FROZEN_CANDIDATE"
+    "scorer_implementation": "tools/score_agent_v1.py",
+    "status": "ACTIVE_IN_FORMAL_RUN",
+    "scorer_version": "agent-v1-scorer-v1",
+    "scorer_git_blob_sha": "304f7969bb54e5f6867e6973af156e9983cf5fce"
   },
   "dependency_versions": {
     "lock_file": "requirements-benchmark-lock.txt",
@@ -140,6 +155,34 @@
     "git_blob_sha": "cf4c8ffba92583ca08d726a57bce9093223ead16",
     "freeze_version": "raw-prediction-freeze-v1",
     "rule": "raw predictions are hashed before normalization, verification or scoring; any edit voids the run",
+    "status": "ACTIVE_IN_FORMAL_RUN"
+  },
+  "artifact_contracts_doc": "docs/AGENT_V1_ARTIFACT_CONTRACTS.md",
+  "chain_runner": {
+    "version": "agent-v1-chain-runner-v1",
+    "tool_path": "tools/run_chain.py",
+    "git_blob_sha": "9b4c830ecb5a21d9dae195f20ad4507ad3e96653",
+    "artifacts": [
+      "normalized_predictions.jsonl",
+      "verified_predictions.jsonl",
+      "chain_manifest.json"
+    ],
+    "join_key": "candidate_id",
+    "status": "ACTIVE_IN_FORMAL_RUN"
+  },
+  "artifact_loader": {
+    "module_path": "modules/artifact_chain.py",
+    "git_blob_sha": "6de74bdd8a09e59028c9bae35dcde679dd80fcfb",
+    "checks": [
+      "raw file sha256",
+      "candidate id digest",
+      "field schema version",
+      "extractor version",
+      "prompt version",
+      "response schema version",
+      "no downstream state inside raw"
+    ],
+    "behaviour_on_mismatch": "fail closed",
     "status": "ACTIVE_IN_FORMAL_RUN"
   }
 }

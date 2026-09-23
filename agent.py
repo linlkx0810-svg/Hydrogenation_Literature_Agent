@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 from modules.extraction_verifier import verify_candidates
+from modules.prediction_normalizer import normalize_record
 from modules.raw_llm_extractor_v2 import (
     EXTRACTION_VERSION as RAW_EXTRACTION_VERSION,
     PROMPT_VERSION as RAW_PROMPT_VERSION,
@@ -60,10 +61,23 @@ def command_verify_text(args: argparse.Namespace) -> int:
     candidates = extract_reaction_candidates(
         text, context_sentences=args.context
     )
-    verifications = verify_candidates(candidates, text)
+    normalizations = {
+        candidate.candidate_id: normalize_record(
+            {
+                "candidate_id": candidate.candidate_id,
+                "source_artifact_id": str(input_path),
+                "values": {"ligand": candidate.ligand},
+                "abstention_reasons": {},
+            },
+            text,
+        )
+        for candidate in candidates
+    }
+    verifications = verify_candidates(candidates, text, normalizations)
     payload = {
         "agent": "Hydrogenation Literature Agent",
         "extractor": "rule-baseline-v1",
+        "normalizer": "prediction-normalizer-v1",
         "verifier": "evidence-verifier-v1",
         "source": str(input_path),
         "candidate_count": len(candidates),
@@ -184,6 +198,39 @@ def command_trust_benchmark(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_run_chain(args: argparse.Namespace) -> int:
+    from tools.run_chain import run as run_chain_stage
+    from modules.artifact_chain import FrozenArtifactError
+
+    try:
+        report = run_chain_stage(
+            Path(args.raw), Path(args.freeze), Path(args.source), Path(args.out_dir)
+        )
+    except FrozenArtifactError as exc:
+        print(json.dumps({"status": "FAIL_CLOSED", "error": str(exc)}, indent=2))
+        return 2
+    print(json.dumps(report, indent=2))
+    return 0
+
+
+def command_score(args: argparse.Namespace) -> int:
+    from tools.score_agent_v1 import _read_jsonl, score
+    from modules.artifact_chain import FrozenArtifactError, load_frozen_raw
+
+    try:
+        records, _ = load_frozen_raw(Path(args.raw), Path(args.freeze))
+    except FrozenArtifactError as exc:
+        print(json.dumps({"status": "FAIL_CLOSED", "error": str(exc)}, indent=2))
+        return 2
+    report = score(records, _read_jsonl(Path(args.verified)), _read_jsonl(Path(args.gold)))
+    if args.output:
+        Path(args.output).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        print(f"Wrote score report to {args.output}")
+    else:
+        print(json.dumps(report, indent=2))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="hla-agent",
@@ -255,6 +302,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="Model name recorded in the raw prediction records",
     )
     raw_parser.set_defaults(func=command_extract_raw)
+
+    chain_parser = subparsers.add_parser(
+        "run-chain",
+        help="Frozen raw prediction -> normalization -> evidence verifier.",
+    )
+    chain_parser.add_argument("--raw", required=True, help="frozen raw prediction JSONL")
+    chain_parser.add_argument("--freeze", required=True, help="raw freeze manifest JSON")
+    chain_parser.add_argument("--source", required=True, help="source text used for extraction")
+    chain_parser.add_argument("--out-dir", required=True, help="directory for chain artifacts")
+    chain_parser.set_defaults(func=command_run_chain)
+
+    score_parser = subparsers.add_parser(
+        "score",
+        help="Score Raw and Verified predictions under SCORING_CONTRACT_V1.",
+    )
+    score_parser.add_argument("--raw", required=True)
+    score_parser.add_argument("--freeze", required=True)
+    score_parser.add_argument("--verified", required=True)
+    score_parser.add_argument("--gold", required=True)
+    score_parser.add_argument("--output", help="Optional score report path")
+    score_parser.set_defaults(func=command_score)
 
     return parser
 

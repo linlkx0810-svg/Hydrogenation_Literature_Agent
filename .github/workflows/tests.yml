@@ -49,6 +49,12 @@ jobs:
           python tools/freeze_raw_predictions.py --predictions raw_predictions.jsonl             --out raw_predictions.freeze.json
           python tools/freeze_raw_predictions.py --predictions raw_predictions.jsonl             --out raw_predictions.freeze.json --verify
 
+      - name: Run the post-freeze chain and score it
+        run: |
+          python agent.py run-chain --raw raw_predictions.jsonl             --freeze raw_predictions.freeze.json             --source examples/raw_chain_sample.txt --out-dir chain_out
+          python agent.py score --raw raw_predictions.jsonl             --freeze raw_predictions.freeze.json             --verified chain_out/verified_predictions.jsonl             --gold examples/agent_v1_chain_gold_example.jsonl             --output chain_out/score_report.json
+          python -c "import hashlib,json,pathlib;m=json.loads(pathlib.Path('raw_predictions.freeze.json').read_text());d=hashlib.sha256(pathlib.Path('raw_predictions.jsonl').read_bytes()).hexdigest();assert d==m['raw_predictions_sha256'], 'raw artifact was modified downstream';print('raw artifact still matches its freeze')"
+
       - name: Smoke-test unified agent CLI
         run: |
           python agent.py benchmark --dataset examples/benchmark_synthetic.jsonl

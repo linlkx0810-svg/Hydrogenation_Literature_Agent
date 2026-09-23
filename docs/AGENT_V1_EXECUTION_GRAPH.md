@@ -1,6 +1,6 @@
 # Agent v1.0 formal execution graph
 
-Date: 2026-09-23. Status: the first half of the graph (source → evidence builder → Raw LLM → frozen raw prediction) runs on this branch; normalization, verification and scoring are implemented as modules but not yet chained into one runner. See `docs/AGENT_V1_PIPELINE_AUDIT.md` and `benchmark/agent_v1_system_freeze_candidate.json`.
+Date: 2026-09-23. Status: the whole graph runs offline on this branch through `agent.py extract-raw`, `run-chain` and `score`. Artifact-level rules are in `docs/AGENT_V1_ARTIFACT_CONTRACTS.md`; remaining gaps are listed in `benchmark/agent_v1_system_freeze_candidate.json`.
 
 ## The single formal graph
 
@@ -27,7 +27,11 @@ One line: `source → evidence builder → Raw LLM → frozen raw prediction →
 | `tools/freeze_raw_predictions.py` | raw prediction freeze | `ACTIVE_IN_FORMAL_RUN` |
 | `modules/openai_responses_provider.py` | provider transport | `ACTIVE_IN_FORMAL_RUN` |
 | `modules/llm_extractor.py` (`llm-extractor-v1`, 8 fields) | historical implementation | `LEGACY_NOT_USED` |
-| `modules/ligand_resolver.py` | entity normalization | `ACTIVE_IN_FORMAL_RUN` |
+| `modules/prediction_normalizer.py` | normalization stage (`ligand` ACTIVE, other fields `PASS_THROUGH_V1`) | `ACTIVE_IN_FORMAL_RUN` |
+| `modules/ligand_resolver.py` | ligand resolution, called by the normalizer | `ACTIVE_IN_FORMAL_RUN` |
+| `modules/artifact_chain.py` | fail-closed frozen-artifact loader | `ACTIVE_IN_FORMAL_RUN` |
+| `tools/run_chain.py` | normalization + verification runner | `ACTIVE_IN_FORMAL_RUN` |
+| `tools/score_agent_v1.py` | scorer implementing `SCORING_CONTRACT_V1` | `ACTIVE_IN_FORMAL_RUN` |
 | `modules/extraction_verifier.py` | evidence verifier | `ACTIVE_IN_FORMAL_RUN` |
 | `modules/verifier.py` (LLM verifier-v1) | second-opinion verifier | `DEFERRED_TO_V1_1` — not in the v1.0 graph |
 | `modules/reaction_data_extraction.py` | paper-level Stage 5 extractor | `LEGACY_NOT_USED` |
@@ -79,14 +83,16 @@ Normalization is a separate record. It annotates the raw value; it does not repl
 
 Deterministic. Inputs: one normalized field value and the exact evidence window bound to its candidate. First it re-slices `source_text[start:end]` and compares it to the stored evidence: on mismatch or invalid offsets every field of that candidate is `unsupported` and the candidate is rejected.
 
-Allowed per-field outcomes: `supported`, `partial`, `unsupported`, `unresolved`, `ambiguous`.
+Allowed per-field outcomes: `supported`, `partial`, `unsupported`, `unresolved`, `ambiguous`, `not_checked_v1`.
+
+`evidence-verifier-v1` implements checks for 8 of the 12 fields. `reaction`, `catalyst`, `product` and `stereochemical_outcome` are emitted as `not_checked_v1` with `checked_by_verifier: false`; they are excluded from the verifier's support-rate denominator and are never treated as withheld.
 Allowed per-candidate routing: `accept`, `review`, `reject`.
 
 The verifier may not produce a value that the extractor did not produce. It has no authority to correct chemistry, only to withhold it.
 
 ### 5. Scorer
 
-Field-atomic per `benchmark/FIELD_SCHEMA_V1.json`, metrics per `benchmark/SCORING_CONTRACT_V1.md`, reported as a paired Raw vs Verified table on identical units.
+Field-atomic per `benchmark/FIELD_SCHEMA_V1.json`, metrics per `benchmark/SCORING_CONTRACT_V1.md`, implemented in `tools/score_agent_v1.py`, reported as a paired Raw vs Verified table on identical units and joined on `candidate_id`.
 
 ## Evaluation unit
 

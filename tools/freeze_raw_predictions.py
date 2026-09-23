@@ -18,9 +18,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from modules.artifact_chain import candidate_ids_digest  # noqa: E402
 from modules.raw_llm_extractor_v2 import (  # noqa: E402
     EXTRACTION_VERSION,
     FIELD_NAMES,
+    FIELD_SCHEMA,
     PROMPT_VERSION,
     SCHEMA_VERSION,
 )
@@ -108,6 +110,7 @@ def check_records(records: list[dict]) -> dict:
     return {
         "record_count": len(records),
         "distinct_candidate_ids": len(ids),
+        "candidate_ids_sha256": candidate_ids_digest(ids),
         "models": dict(models),
         "answered_field_values": answered,
         "null_field_values": len(records) * len(FIELD_NAMES) - answered,
@@ -120,12 +123,15 @@ def freeze(predictions: Path, out: Path) -> dict:
     digest = hashlib.sha256(predictions.read_bytes()).hexdigest()
     manifest = {
         "freeze_version": FREEZE_VERSION,
+        "artifact": predictions.name,
         "raw_predictions_path": predictions.name,
         "raw_predictions_sha256": digest,
         "extraction_version": EXTRACTION_VERSION,
         "prompt_version": PROMPT_VERSION,
         "schema_version": SCHEMA_VERSION,
+        "field_schema_version": FIELD_SCHEMA["schema_version"],
         "field_count": len(FIELD_NAMES),
+        "frozen": True,
         "normalization_run": False,
         "verification_run": False,
         "scoring_run": False,
