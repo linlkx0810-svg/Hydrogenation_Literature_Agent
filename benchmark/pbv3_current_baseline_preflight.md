@@ -1,79 +1,69 @@
 # prospective-blind-v3 identity gate preflight
 
 Role: independent benchmark custodian
-Date: 2026-09-23
+Date: 2026-09-23 (supersedes the 2026-09-23 first pass on this branch)
 Agent candidate: `cb48b2d439b272b8c1740b0d1de197a01e3bc98f` (branch `agent-v1-ligand-verifier`, PR #20)
 
 ## Result
 
 `PBV3_IDENTITY_GATE = BLOCKED_INSUFFICIENT_CLEAN_CANDIDATES`
 Reason code: `PBV3_COHORT_UNDERFILLED`
+`EXECUTION_READY = NO`
 
-7 of 12 slots hold a clean lock candidate. No identity manifest was frozen and no `gate_attestation_v1.json` was created. Every check that could be run on the 7 passed; the gate is blocked on cohort size, not on a detected overlap.
+8 of 12 slots hold a clean candidate, one more than before this round. Every gate that could be run on those 8 returned zero overlap. No identity freeze, no `gate_attestation_v1.json`, no Agent execution.
 
-## Unified exclusion registry
+## Literature cutoff
 
-`benchmark/blind_eligibility_exclusion_registry.csv`, sha256 `6ef807a3…afe61`: 1971 unique normalized DOIs, all `EXCLUDE`, of which 106 are publisher-alias rows. `IDENTITY_ONLY_SAFE` is empty for now. Construction and rules are in `benchmark/blind_eligibility_registry_report.md`.
+`LAST_DEVELOPMENT_LITERATURE_SCREENING_CUTOFF = 2026-09-09`, recovered from dated local governance artifacts and attested in `benchmark/pbv3_literature_cutoff_attestation.md`. A dedicated sweep of the post-cutoff window returned no 3d-metal asymmetric hydrogenation primary paper, so Tier 1 is empty and all 8 clean candidates are Tier 2 `RETROSPECTIVE_BUT_UNSEEN`.
 
-## PBV2 reassessment under the unified standard
+## Cohort
 
-| Outcome | Cases |
+| | Count |
 |---|---|
-| CLEAN, retained | 5 |
-| CONTAMINATED | 6 |
-| EXCLUDE_UNCERTAIN | 1 |
-| Removed in total | 7 |
+| Clean locked | 8 |
+| Backup clean | 0 |
+| Remaining deficit | 4 |
+| Duplicates | 0 |
+| Tier 1 prospective | 0 |
+| Tier 2 retrospective but unseen | 8 |
 
-The three cases already known to be contaminated were joined by three of the four previously uncertain cases: their identities sit in adjudicated corpus screening records, which the exposed-papers registry treats as `RULE_DEVELOPMENT`. The last uncertain case occurs in project manuscript text and a source catalog; its role cannot be settled without reading chemistry, so it is `EXCLUDE_UNCERTAIN`. No case was carried forward as `UNCERTAIN`.
+Aggregate metal distribution: Ni 3, Mn 3, Co 2. Fe 0.
 
-## Replacement funnel
+## Gates
 
-| Step | Count |
+| Gate | Result |
 |---|---|
-| Bibliographic discovery pool (Crossref snapshot, identity metadata only) | 211 |
-| After unified-exclusion, development and PBV2 removal | 175 |
-| In-scope journal articles (asymmetric + hydrogenation in title) | 87 |
-| Naming a single 3d metal, primary-research shaped | 11 |
-| Rejected: DOI alias or registry hit | 2 |
-| Rejected: non-experimental (theoretical, mechanistic-origin) | 3 |
-| Rejected: abstracting/highlight service, not primary literature | 3 |
-| Viable | 3 |
-| Clean after the identity exposure scan | **2** |
-| EXCLUDE_UNCERTAIN after that scan | 1 |
+| A — development manifest overlap (DOI, alias, paper_id, title) | 0 |
+| B — unified eligibility registry overlap (DOI, alias, title) | 0 |
+| C — repository and developer exposure (branches, tags, full history, `git log -S`, local project roots, title scan) | 0 |
+| Duplicate gate | 0 |
+| Source readiness | 5 `SOURCE_PACKAGE_READY`, 3 `SOURCE_NOT_READY` |
+| Final | `BLOCKED_INSUFFICIENT_CLEAN_CANDIDATES` |
 
-Two rejections matter beyond arithmetic: one candidate was the German-edition DOI of a paper the Agent has already been evaluated on as Blind-v1, and another the alias of a paper in a prior development inventory. An exact-match check against the old 187-DOI blacklist would have admitted both. Alias expansion now blocks them.
-
-## Gates on the 7 clean lock candidates
-
-| Gate | Requirement | Result |
-|---|---|---|
-| A — development | DOI and paper_id overlap with `benchmark/development_manifest.csv` = 0 | 0 / 0 |
-| B — unified exclusion registry | `EXCLUDE` DOI and paper_id overlap = 0 | 0 / 0 |
-| C — current baseline and PR #20 | scientific-development exposure = 0 | 0 |
-| duplicates within the cohort | 0 | 0 |
-
-Gate C covered every remote branch tree, `git log -S` over all refs, and a full text scan of the three local project roots. The only identity occurrences for retained cases are in custodian-held prospective-blind tooling, which is recorded, not counted as exposure.
-
-Metal distribution of the 7: Ni 3, Mn 3, Co 1. Fe is currently unrepresented. Metal balance was not traded against the exclusion standard.
-
-Source availability: the 2 new candidates carry `OA_LICENSE_METADATA_ONLY_NOT_ACQUIRED`. Files must be acquired and hashed before any run.
-
-## Blind governance fix
-
-Two developer-visible helper scripts had blind DOIs and titles hard-coded. Both now load identities from a custodian-private JSON via `--targets` or `BLIND_IDENTITY_TARGETS`, and they exit with an error when no file is supplied. The custodian-private identity target file lives outside the repository. A test guards the repository against any prospective-blind DOI reappearing in tracked files.
+The recruitment funnel and the reason the pool is exhausted are in `benchmark/pbv3_recruitment_funnel_report.md`.
 
 ## Integrity
 
 - Blind Gold opened: no
-- Blind predictions generated: no
-- Blind scoring performed: no
-- Resolver, verifier or any Agent component run on blind papers: no
-- Blind chemistry (reactions, catalysts, ligands, substrates, products, conditions, yield, ee/er, evidence chunks) inspected: no
-- Extractor, resolver, verifier, prompts, thresholds, normalization and scoring code: unchanged
-- Blind identities in the repository: none. Public references use `PBV3-001` … `PBV3-012`.
+- Predictions generated: no
+- Agent executed on any candidate: no
+- Resolver or verifier run: no
+- Scoring performed: no
+- Chemistry fields inspected (reaction, catalyst, ligand, substrate, product, conditions, yield, ee/er): no
+- Abstracts read: no
+- Developer scientific logic changed: no
+- Blind identities in the repository: none. Public references use `PBV3-001` … `PBV3-012`; the case-to-metal mapping is not published, only the aggregate.
+
+## Custodian-private artifacts
+
+Held outside the repository under `reports/normalization_prospective_blind_v2/custodian_private/`:
+`pbv3_identity_manifest_v1.csv`, `pbv3_source_manifest_v1.csv`, `pbv3_recruitment_audit_v1.csv`, `pbv3_pending_scope_candidates_v1.csv`, `pbv3_backup_candidates_v1.csv`, `pbv3_cohort_work_v1.csv`, `blind_identity_targets_v1.json`. Their hashes are recorded in `benchmark/pbv3_current_baseline_preflight.json`.
 
 ## What unblocks the gate
 
-5 more clean papers. The exhausted pool is a stale Crossref snapshot taken during the v2 recruitment, not the literature. A fresh custodian discovery sweep, run against the 1971-DOI registry and restricted to work published after the last corpus screening sweep, is the way to fill the remaining slots. Recruitment must stay with the custodian.
+Four more clean papers, from either of two channels.
 
-The execution freeze stays out of scope until the cohort is complete. The old freeze pins `modules/llm_extractor.py`, `modules/verifier.py` and model `gpt-5.6-sol`, while PR #20 adds `modules/ligand_resolver.py` and `modules/extraction_verifier.py`. These are not the same evaluation graph, and no run may be planned until that is resolved and frozen.
+1. **Prospective accrual.** Run a monthly Crossref sweep from 2026-09-09 forward under the recruitment policy. This is the only channel that yields genuine Tier 1 cases.
+2. **Scope pass on the residual pool.** 101 discovered papers have an asymmetric-hydrogenation title, are absent from the registry, and do not name a metal in the title. A human custodian can decide scope from the abstract and hand back the in-scope subset for gating. This custodian did not read abstracts and will not guess.
+
+The execution freeze stays out of scope. The old freeze pins `modules/llm_extractor.py`, `modules/verifier.py` and model `gpt-5.6-sol`, while PR #20 adds `modules/ligand_resolver.py` and `modules/extraction_verifier.py`; that graph conflict and the field-schema crosswalk are the next phase, after the cohort is complete.
