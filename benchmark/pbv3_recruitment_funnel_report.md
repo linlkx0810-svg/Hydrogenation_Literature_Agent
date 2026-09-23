@@ -36,7 +36,7 @@ The developer's own literature screening has already enumerated essentially the 
 Two consequences follow.
 
 1. The realistic source of clean blind papers is **future** literature. The prospective window is currently two weeks wide and empty. Monthly accrual after the cutoff is the reliable path to the remaining 4 slots.
-2. A residual pool of 101 papers has an asymmetric-hydrogenation title, is absent from the registry, but does not name a metal in its title. Most are probably precious-metal or organocatalytic work, which is exactly why the 3d screening never captured them. Deciding scope needs an abstract-level read. This custodian did not read any abstract, so those papers stay unscreened rather than being guessed into the cohort. The list is held privately for a human custodian scope pass.
+2. A residual pool of 101 papers had an asymmetric-hydrogenation title, no registry hit, and no metal in its title. Round 2 left it unscreened because deciding scope needs an abstract. Round 3 below adjudicated it.
 
 ## Gate results for the 8 clean candidates
 
@@ -62,4 +62,23 @@ Tier composition: Tier 1 prospective 0, Tier 2 `RETROSPECTIVE_BUT_UNSEEN` 8. Non
 
 ## Method notes
 
-Discovery used the Crossref REST API with bibliographic queries only. The custodian read titles, journal names, publication dates, type, license and link metadata. No abstract, no full text, no reaction table, no ligand, yield, ee or condition was read for any candidate. Candidate DOIs were alias-expanded through `tools/doi_aliases.py` before every comparison, and candidates were de-duplicated on normalized title as well as on DOI.
+Rounds 1 and 2 used the Crossref REST API with bibliographic queries only: titles, journal names, publication dates, type, license and link metadata, no abstracts. Round 3 additionally read abstract metadata, for scope classification only. No full text, reaction table, ligand, yield, ee or condition was read at any point. Candidate DOIs were alias-expanded through `tools/doi_aliases.py` before every comparison, and candidates were de-duplicated on normalized title as well as on DOI.
+
+## Round 3: abstract-level scope adjudication of the residual pool
+
+The 101 papers that carried an asymmetric-hydrogenation title, no registry hit and no metal in the title were adjudicated at abstract level. Abstract metadata came from Crossref (90 records, 53 of them via OpenAlex's inverted index). 11 papers had no abstract available anywhere.
+
+| Outcome | Count |
+|---|---|
+| Reviewed | 101 |
+| `IN_SCOPE` | **0** |
+| `OUT_OF_SCOPE` | 81 |
+| `SCOPE_UNCERTAIN` | 20 |
+
+Reason codes: `OUT_NON_3D_METAL` 64, `OUT_HETEROGENEOUS_OUTSIDE_SCOPE` 11, `OUT_NOT_HYDROGENATION` 3, `OUT_TRANSFER_HYDROGENATION` 2, `OUT_THEORETICAL_ONLY` 1, `UNCERTAIN_METAL` 10, `UNCERTAIN_ARTICLE_TYPE` 9, `UNCERTAIN_H2_SOURCE` 1.
+
+This confirms the round-2 inference rather than overturning it: the residual pool was dominated by precious-metal catalysis, and the rest is heterogeneous, metal-free or borane/FLP work, reviews, process and machine-learning papers, or abstracts too thin to settle the catalyst. Not a single homogeneous 3d-metal molecular-H2 asymmetric hydrogenation paper was hiding in it. No candidate reached Gate A, so Gates A, B and C had nothing to run on this round.
+
+The 20 `SCOPE_UNCERTAIN` papers stay excluded. Unknown means exclude; they remain in the private pending list for a human pass if anyone wants to revisit them with full text.
+
+Method: abstracts were used only to answer the five scope questions (primary experimental, asymmetric, molecular H2, 3d metal, benchmark reaction class). Classification was rule-based over keyword patterns. No abstract text was stored in the repository or in the private audit, and no ligand, catalyst structure, substrate, product, pressure, temperature, time, solvent, yield, ee, er or dr was recorded anywhere.

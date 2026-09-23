@@ -86,6 +86,20 @@ def test_gate_status_and_counts_are_consistent():
         assert PREFLIGHT["identity_manifest_frozen"] is False
 
 
+def test_scope_adjudication_counts_are_consistent():
+    scope = PREFLIGHT.get("scope_adjudication")
+    if not scope:
+        pytest.skip("no scope adjudication round recorded")
+    assert scope["in_scope"] + scope["out_of_scope"] + scope["scope_uncertain"] == scope["pending_reviewed"]
+    assert scope["abstract_metadata_available"] + scope["abstract_metadata_missing"] == scope["pending_reviewed"]
+    assert sum(scope["reason_codes"].values()) == scope["pending_reviewed"]
+    assert scope["abstracts_stored"] is False
+    assert scope["target_fields_extracted"] is False
+    gates = PREFLIGHT["gates_for_newly_in_scope"]
+    assert gates["clean_after_gates"] <= scope["in_scope"]
+    assert PREFLIGHT["cohort"]["clean_locked"] <= PREFLIGHT["target_cohort_size"]
+
+
 def test_no_agent_execution_or_gold_artifacts():
     for key in ("gold_generated", "predictions_generated", "agent_run", "resolver_run",
                 "scoring_run", "blind_gold_opened", "blind_chemistry_inspected",

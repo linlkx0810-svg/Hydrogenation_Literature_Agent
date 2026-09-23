@@ -24,7 +24,7 @@
     "already_locked_in_cohort": 4,
     "after_alias_and_registry_gates": 1,
     "after_exposure_gate": 1,
-    "pending_scope_verification_pool": 101
+    "pending_scope_verification_pool": 20
   },
   "cohort": {
     "clean_locked": 8,
@@ -52,7 +52,7 @@
   "identity_manifest_frozen": false,
   "custodian_private_identity_manifest_sha256": "88397e89b575d058d4c6133e2878347a35d04605835e2a8f82c9f68a878e6aab",
   "custodian_private_source_manifest_sha256": "c519d256d37d175db213f99358bcd1047b996525ee3f9456e6e432af5412c420",
-  "custodian_private_recruitment_audit_sha256": "216da62257048c0d1eb13377b2137d51296f71f1397f67ea8198a70b91079e3c",
+  "custodian_private_recruitment_audit_sha256": "b8654ed72d8d7659cacb5163387639bf7a333c1910b4502024f1f0873e5730a9",
   "gold_generated": false,
   "predictions_generated": false,
   "agent_run": false,
@@ -60,7 +60,7 @@
   "scoring_run": false,
   "blind_gold_opened": false,
   "blind_chemistry_inspected": false,
-  "abstracts_read": false,
+  "abstracts_read": true,
   "developer_scientific_logic_changed": false,
   "pbv2_reassessment": {
     "total": 12,
@@ -68,5 +68,36 @@
     "contaminated": 6,
     "exclude_uncertain": 1,
     "removed": 7
-  }
+  },
+  "scope_adjudication": {
+    "round": "abstract-level scope pass",
+    "pending_reviewed": 101,
+    "abstract_metadata_available": 90,
+    "abstract_metadata_missing": 11,
+    "in_scope": 0,
+    "out_of_scope": 81,
+    "scope_uncertain": 20,
+    "reason_codes": {
+      "OUT_NON_3D_METAL": 64,
+      "UNCERTAIN_METAL": 10,
+      "OUT_HETEROGENEOUS_OUTSIDE_SCOPE": 11,
+      "UNCERTAIN_H2_SOURCE": 1,
+      "UNCERTAIN_ARTICLE_TYPE": 9,
+      "OUT_NOT_HYDROGENATION": 3,
+      "OUT_THEORETICAL_ONLY": 1,
+      "OUT_TRANSFER_HYDROGENATION": 2
+    },
+    "abstracts_stored": false,
+    "target_fields_extracted": false
+  },
+  "gates_for_newly_in_scope": {
+    "gate_a_rejected": 0,
+    "gate_b_rejected": 0,
+    "gate_c_contaminated": 0,
+    "gate_c_uncertain": 0,
+    "clean_after_gates": 0,
+    "note": "no candidate reached the gates"
+  },
+  "custodian_private_scope_adjudication_sha256": "389c2fcbf3c58fe0f3d13556e41ab403a796b6d981252ad3e1ba3be51dd5ec7d",
+  "abstracts_read_for_scope_only": true
 }
