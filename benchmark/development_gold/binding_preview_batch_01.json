@@ -1,0 +1,19 @@
+{
+  "preview_version": "binding-preview-batch-01-v1",
+  "hypothetical": true,
+  "note": "This is what binding would become if every Batch 01 proposal were approved. No formal artifact was modified.",
+  "current": {
+    "AMBIGUOUS_BINDING": 2,
+    "UNREPRESENTABLE_V1": 8,
+    "BOUND_EXACT": 2
+  },
+  "projected": {
+    "AMBIGUOUS_BINDING": 2,
+    "UNREPRESENTABLE_V1": 8,
+    "BOUND_EXACT": 2
+  },
+  "changed_cases": [],
+  "projected_exact": 2,
+  "projected_ambiguous": 2,
+  "projected_unrepresentable": 8
+}

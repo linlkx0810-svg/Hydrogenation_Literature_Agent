@@ -1,0 +1,13 @@
+gold_case_id,paper_id,source_text_available,candidate_count,bound_candidate_id,binding_method,binding_status,note
+DEV-001,FE-H2-AH-0005,True,7,,gold_value_pin,CANDIDATE_BINDING_FAILURE,No candidate chunk reproduces the adjudicated Gold values; the evidence builder does not surface this target.
+DEV-002,FE-H2-AH-0016,True,15,,,BINDING_PENDING_ADJUDICATION,"No adjudicated numeric Gold value yet, so no chunk can be pinned."
+DEV-003,FE-H2-AH-0022,True,16,rxn-0003,gold_value_pin,BOUND,Exactly one candidate chunk reproduces the adjudicated Gold values.
+DEV-004,NI-H2-AH-0031,True,7,,,BINDING_PENDING_ADJUDICATION,"No adjudicated numeric Gold value yet, so no chunk can be pinned."
+DEV-005,NI-H2-AH-0032,True,5,,,BINDING_PENDING_ADJUDICATION,"No adjudicated numeric Gold value yet, so no chunk can be pinned."
+DEV-006,NI-H2-AH-0027,True,18,,,BINDING_PENDING_ADJUDICATION,"No adjudicated numeric Gold value yet, so no chunk can be pinned."
+DEV-007,FE-H2-AH-0006,True,1,,,BINDING_PENDING_ADJUDICATION,"No adjudicated numeric Gold value yet, so no chunk can be pinned."
+DEV-008,FE-H2-AH-0011,True,19,,,BINDING_PENDING_ADJUDICATION,"No adjudicated numeric Gold value yet, so no chunk can be pinned."
+DEV-009,FE-H2-AH-0017,True,27,,gold_value_pin,CANDIDATE_BINDING_FAILURE,No candidate chunk reproduces the adjudicated Gold values; the evidence builder does not surface this target.
+DEV-010,NI-H2-AH-0007,True,2,,,BINDING_PENDING_ADJUDICATION,"No adjudicated numeric Gold value yet, so no chunk can be pinned."
+DEV-011,NI-H2-AH-0025,True,50,,,BINDING_PENDING_ADJUDICATION,"No adjudicated numeric Gold value yet, so no chunk can be pinned."
+DEV-012,NI-H2-AH-0029,True,10,,gold_value_pin,CANDIDATE_BINDING_FAILURE,No candidate chunk reproduces the adjudicated Gold values; the evidence builder does not surface this target.

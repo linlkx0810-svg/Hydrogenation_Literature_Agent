@@ -35,5 +35,42 @@ jobs:
       - name: Run deterministic extraction benchmark
         run: python tools/run_benchmark.py --dataset examples/benchmark_synthetic.jsonl
 
+      - name: Run evidence-verifier trust benchmark
+        run: python tools/run_trust_benchmark.py --dataset examples/benchmark_synthetic.jsonl
+
+
+      - name: Dry-run the Raw LLM chain (no model call)
+        run: |
+          python agent.py extract-raw --input examples/raw_chain_sample.txt             --source-id CI-SAMPLE --output raw_requests.json
+
+      - name: Replay the Raw LLM chain and freeze raw predictions
+        run: |
+          python agent.py extract-raw --input examples/raw_chain_sample.txt             --source-id CI-SAMPLE --replay examples/raw_llm_replay_example.jsonl             --model replay-json --output raw_predictions.jsonl
+          python tools/freeze_raw_predictions.py --predictions raw_predictions.jsonl             --out raw_predictions.freeze.json
+          python tools/freeze_raw_predictions.py --predictions raw_predictions.jsonl             --out raw_predictions.freeze.json --verify
+
+      - name: Run the post-freeze chain and score it
+        run: |
+          python agent.py run-chain --raw raw_predictions.jsonl             --freeze raw_predictions.freeze.json             --source examples/raw_chain_sample.txt --out-dir chain_out
+          python agent.py score --raw raw_predictions.jsonl             --freeze raw_predictions.freeze.json             --verified chain_out/verified_predictions.jsonl             --gold examples/agent_v1_chain_gold_example.jsonl             --output chain_out/score_report.json
+          python -c "import hashlib,json,pathlib;m=json.loads(pathlib.Path('raw_predictions.freeze.json').read_text());d=hashlib.sha256(pathlib.Path('raw_predictions.jsonl').read_bytes()).hexdigest();assert d==m['raw_predictions_sha256'], 'raw artifact was modified downstream';print('raw artifact still matches its freeze')"
+
+      - name: Rebuild the development Gold, replay decisions, check the freeze gate
+        run: |
+          python tools/build_development_gold_stage1.py --out /tmp/stage1.jsonl
+          python tools/build_development_gold.py --stage1 /tmp/stage1.jsonl --out /tmp/gold_pre_review.jsonl --status /tmp/status_pre_review.json
+          python tools/apply_human_gold_reviews.py --gold /tmp/gold_pre_review.jsonl --reviews benchmark/development_gold/human_review_batch_01.csv --out /tmp/gold_replayed.jsonl
+          python -c "import pathlib;a=pathlib.Path('benchmark/development_gold/development_gold_field_schema_v1.jsonl').read_bytes();b=pathlib.Path('/tmp/gold_replayed.jsonl').read_bytes();assert a==b,'the committed Gold is not reproducible from inputs plus recorded decisions';print('Gold = migration + adjudication + recorded human decisions, reproducibly')"
+          python tools/report_development_gold_status.py --gold benchmark/development_gold/development_gold_field_schema_v1.jsonl --out /tmp/status.json
+          python -c "import json,pathlib;a=json.loads(pathlib.Path('benchmark/development_gold_v1_status.json').read_text());b=json.loads(pathlib.Path('/tmp/status.json').read_text());assert a==b,'committed Gold status is stale';print('status reproducible')"
+          python tools/freeze_development_gold.py --gold benchmark/development_gold/development_gold_field_schema_v1.jsonl --out benchmark/development_gold/development_gold_field_schema_v1.freeze.json --verify
+
+      - name: Re-audit candidate binding and the human-review queue
+        run: |
+          python tools/build_human_review_queue.py --gold benchmark/development_gold/development_gold_field_schema_v1.jsonl --binding benchmark/development_gold/candidate_binding_v1.csv --out /tmp/queue.csv
+          python -c "import pathlib;a=pathlib.Path('benchmark/development_gold/HUMAN_REVIEW_QUEUE_V1.csv').read_text();b=pathlib.Path('/tmp/queue.csv').read_text();assert a==b,'the committed human-review queue is not reproducible';print('human-review queue reproducible')"
+
       - name: Smoke-test unified agent CLI
-        run: python agent.py benchmark --dataset examples/benchmark_synthetic.jsonl
+        run: |
+          python agent.py benchmark --dataset examples/benchmark_synthetic.jsonl
+          python agent.py trust-benchmark --dataset examples/benchmark_synthetic.jsonl
