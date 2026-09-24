@@ -68,6 +68,12 @@ jobs:
           python tools/build_human_review_queue.py --gold benchmark/development_gold/development_gold_field_schema_v1.jsonl --binding benchmark/development_gold/candidate_binding_v1.csv --out /tmp/queue.csv
           python -c "import pathlib;a=pathlib.Path('benchmark/development_gold/HUMAN_REVIEW_QUEUE_V1.csv').read_text();b=pathlib.Path('/tmp/queue.csv').read_text();assert a==b,'the committed human-review queue is not reproducible';print('human-review queue reproducible')"
 
+      - name: Check the review batch cannot mutate Gold
+        run: |
+          python tools/apply_human_gold_reviews.py --gold benchmark/development_gold/development_gold_field_schema_v1.jsonl --reviews benchmark/development_gold/human_review_batch_01.csv --out /tmp/should_not_exist.jsonl
+          python -c "import pathlib;assert not pathlib.Path('/tmp/should_not_exist.jsonl').exists(),'blank decisions must not write Gold';print('no blank-decision promotion')"
+          python tools/freeze_development_gold.py --gold benchmark/development_gold/development_gold_field_schema_v1.jsonl --out benchmark/development_gold/development_gold_field_schema_v1.freeze.json --verify
+
       - name: Smoke-test unified agent CLI
         run: |
           python agent.py benchmark --dataset examples/benchmark_synthetic.jsonl

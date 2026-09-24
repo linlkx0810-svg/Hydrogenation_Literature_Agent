@@ -1,0 +1,45 @@
+{
+  "status_version": "development-gold-human-review-status-v1",
+  "date": "2026-09-24",
+  "claude_role": "SOURCE_REVIEW_ASSISTANT",
+  "total_open": 106,
+  "batch_01_count": 19,
+  "batch_01_cases": [
+    "DEV-007",
+    "DEV-008",
+    "DEV-009",
+    "DEV-012"
+  ],
+  "batch_01_by_field": {
+    "h2_pressure": 4,
+    "temperature": 4,
+    "reaction_time": 3,
+    "solvent": 4,
+    "yield": 2,
+    "ee_or_er": 2
+  },
+  "high_confidence": 14,
+  "medium_confidence": 5,
+  "low_confidence": 0,
+  "source_conflicts": 0,
+  "projected_binding_gain": {
+    "current_exact": 1,
+    "projected_exact": 2,
+    "current_ambiguous": 3,
+    "projected_ambiguous": 2,
+    "current_unrepresentable": 8,
+    "projected_unrepresentable": 8
+  },
+  "remaining_after_batch_01": 88,
+  "remaining_by_reason": {
+    "VALUE_MUST_BE_READ_FROM_THE_FROZEN_TARGET_ANCHOR": 37,
+    "MANUAL_STRUCTURE_REVIEW_REQUIRED": 10,
+    "CLASS_LABEL_IS_NOT_AN_IDENTITY": 9,
+    "STRUCTURE_OR_LABEL_ONLY_IDENTITY": 11,
+    "STRUCTURE_ONLY_IDENTITY": 12,
+    "ABSOLUTE_CONFIGURATION_NOT_ESTABLISHED": 9
+  },
+  "decisions_prefilled": false,
+  "formal_gold_changed": false,
+  "gold_freeze_status": "INCOMPLETE_NOT_FROZEN"
+}
