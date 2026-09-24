@@ -3,19 +3,19 @@
   "field_schema_version": "agent-v1-field-schema-v1",
   "cases": 12,
   "field_slot_count": 144,
-  "answered": 42,
+  "answered": 45,
   "not_reported": 11,
   "not_applicable": 0,
   "unresolved_reference": 0,
-  "needs_source_review": 91,
-  "scored_slots": 53,
-  "excluded_from_denominator": 91,
+  "needs_source_review": 88,
+  "scored_slots": 56,
+  "excluded_from_denominator": 88,
   "source_confirmed": 14,
-  "human_confirmed": 16,
-  "legacy_migrated": 58,
+  "human_confirmed": 19,
+  "legacy_migrated": 55,
   "newly_adjudicated": 29,
   "provenance_counts": {
-    "LEGACY_GOLD_LOSSLESS_MIGRATION": 51,
+    "LEGACY_GOLD_LOSSLESS_MIGRATION": 48,
     "LEGACY_SOURCE_REVIEW_RECORD": 12,
     "NON_EQUIVALENT_REQUIRES_REVIEW": 9,
     "LEGACY_CORPUS_TAXONOMY": 12,
@@ -23,24 +23,24 @@
     "SOURCE_REVIEW_RECORD_SCOPE": 3,
     "LEGACY_GOLD_TYPED_MIGRATION": 7,
     "LEGACY_TARGET_ANCHOR": 2,
-    "HUMAN_REVIEW_CONFIRMED": 16
+    "HUMAN_REVIEW_CONFIRMED": 19
   },
   "review_status_counts": {
-    "NEEDS_SOURCE_REVIEW": 91,
+    "NEEDS_SOURCE_REVIEW": 88,
     "SOURCE_REVIEWED_NOT_REPORTED": 11,
     "SOURCE_CONFIRMED": 14,
     "PROVISIONAL_SOURCE_ADJUDICATION": 12,
-    "HUMAN_CONFIRMED": 16
+    "HUMAN_CONFIRMED": 19
   },
   "field_breakdown": {
     "h2_pressure": {
-      "needs_source_review": 8,
-      "answered": 4
+      "needs_source_review": 7,
+      "answered": 5
     },
     "temperature": {
-      "needs_source_review": 7,
+      "needs_source_review": 6,
       "not_reported": 1,
-      "answered": 4
+      "answered": 5
     },
     "reaction_time": {
       "not_reported": 1,
@@ -48,8 +48,8 @@
       "answered": 4
     },
     "solvent": {
-      "needs_source_review": 8,
-      "answered": 4
+      "needs_source_review": 7,
+      "answered": 5
     },
     "yield": {
       "not_reported": 6,

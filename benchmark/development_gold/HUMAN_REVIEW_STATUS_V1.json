@@ -2,7 +2,7 @@
   "status_version": "development-gold-human-review-status-v1",
   "date": "2026-09-24",
   "claude_role": "SOURCE_REVIEW_ASSISTANT",
-  "total_open": 91,
+  "total_open": 88,
   "batch_01_count": 19,
   "batch_01_cases": [
     "DEV-007",
@@ -30,7 +30,7 @@
     "current_unrepresentable": 8,
     "projected_unrepresentable": 8
   },
-  "remaining_after_batch_01": 91,
+  "remaining_after_batch_01": 88,
   "remaining_by_reason": {
     "VALUE_MUST_BE_READ_FROM_THE_FROZEN_TARGET_ANCHOR": 37,
     "MANUAL_STRUCTURE_REVIEW_REQUIRED": 10,
@@ -44,25 +44,28 @@
   "gold_freeze_status": "INCOMPLETE_NOT_FROZEN",
   "decisions_recorded": true,
   "decision_authority": "user reviewer, 2026-09-24",
-  "approved": 16,
-  "left_pending": 3,
-  "pending_review_ids": [
-    "B01-017",
-    "B01-018",
-    "B01-019"
-  ],
-  "pending_reason": "Table 2 standard conditions are identified, but entry 7 itself has not yet been directly inspected for row-specific footnotes or exceptions.",
+  "approved": 19,
+  "left_pending": 0,
+  "pending_review_ids": [],
+  "pending_reason": null,
   "gold_after_promotion": {
-    "answered": 42,
+    "answered": 45,
     "not_reported": 11,
     "unresolved_reference": 0,
-    "needs_source_review": 91,
-    "scored_slots": 53,
-    "human_confirmed": 16
+    "needs_source_review": 88,
+    "scored_slots": 56,
+    "human_confirmed": 19
   },
   "binding_after_promotion": {
     "AMBIGUOUS_BINDING": 2,
     "UNREPRESENTABLE_V1": 8,
     "BOUND_EXACT": 2
+  },
+  "batch_01_closed": true,
+  "dev007_resolution": "Table 2 (p.739) inspected visually; entry 7 reports its own T and PH2 and carries no row-specific footnote, so B01-017/018 are based on the entry-7 row and B01-019 on Scheme 3 plus the Table 2 preamble.",
+  "binding_root_causes_after_promotion": {
+    "INSUFFICIENT_ADJUDICATED_VALUES": 7,
+    "TARGET_NOT_REPRESENTABLE_BY_CURRENT_BUILDER": 2,
+    "MULTIPLE_CANDIDATES_AMBIGUOUS": 1
   }
 }

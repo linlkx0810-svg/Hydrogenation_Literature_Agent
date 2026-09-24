@@ -42,9 +42,11 @@ PENDING = [r for r in BATCH_ROWS if not r["reviewer_decision"].strip()]
 def test_decisions_come_from_the_fixed_vocabulary():
     for row in BATCH_ROWS:
         assert row["reviewer_decision"] in DECISIONS, row["review_id"]
-    assert len(APPROVED) == 16
-    assert len(PENDING) == 3
-    assert {r["review_id"] for r in PENDING} == {"B01-017", "B01-018", "B01-019"}
+    assert len(APPROVED) + len(PENDING) + len(
+        [r for r in BATCH_ROWS if r["reviewer_decision"] in {"REJECT", "MODIFY", "UNRESOLVED"}]
+    ) == len(BATCH_ROWS)
+    assert len(APPROVED) == 19, "batch 01 is closed: every row carries a decision"
+    assert len(PENDING) == 0
 
 
 def test_every_approved_row_landed_in_gold_with_human_provenance():
@@ -58,11 +60,27 @@ def test_every_approved_row_landed_in_gold_with_human_provenance():
 
 
 def test_pending_rows_did_not_touch_gold():
+    """Vacuous once batch 01 closed, but it guards the next batch."""
     for row in PENDING:
         field = GOLD[row["case_id"]]["fields"][row["field"]]
         assert field["state"] == "needs_source_review"
         assert field.get("review_status") != "HUMAN_CONFIRMED"
         assert field.get("review_id") is None
+
+
+def test_dev007_conditions_come_from_the_entry_row_not_a_table_default():
+    """The reviewer's note bases 017/018 on entry 7, so Gold must point there."""
+    fields = GOLD["DEV-007"]["fields"]
+    for name in ("h2_pressure", "temperature"):
+        field = fields[name]
+        assert field["state"] == "answered"
+        assert field["source_locator"] == "Table 2 entry 7"
+        assert "no row-specific footnote" in field["reviewer_note"]
+    solvent = fields["solvent"]
+    assert solvent["value"] == "isopropanol"
+    assert solvent["reported_value"] == "basic isopropanol"
+    assert "Scheme 3" in solvent["source_locator"]
+    assert "KOtBu is separately represented as the base" in solvent["reviewer_note"]
 
 
 def test_a_converted_pressure_keeps_the_source_value_and_unit():
@@ -115,13 +133,34 @@ def test_batch_touches_no_structure_only_field():
 def test_promotion_is_idempotent():
     before = GOLD_PATH.read_bytes()
     promoted, counts = promote(_gold(), BATCH_ROWS)
-    assert counts["APPROVE"] == 16 and counts["BLANK"] == 3
+    assert counts["APPROVE"] == 19
     rendered = "\n".join(json.dumps(r, ensure_ascii=False) for r in promoted) + "\n"
     assert rendered.encode("utf-8") == before, "replaying the same decisions must not drift"
 
 
+def _row_for_an_open_slot():
+    """A synthetic review row aimed at a slot that is still needs_source_review."""
+    template = dict(BATCH_ROWS[0])
+    for record in _gold():
+        for name, field in record["fields"].items():
+            if field["state"] == "needs_source_review" and name == "h2_pressure":
+                template.update(
+                    {
+                        "review_id": "SYNTH-001",
+                        "case_id": record["gold_case_id"],
+                        "paper_id": record["paper_id"],
+                        "field": name,
+                        "current_gold_state": "needs_source_review",
+                        "reviewer_decision": "",
+                        "reviewer_note": "",
+                    }
+                )
+                return template
+    raise AssertionError("no open slot left to exercise the promotion verbs")
+
+
 def test_reject_and_blank_never_promote():
-    open_row = dict(PENDING[0])
+    open_row = _row_for_an_open_slot()
     gold = _gold()
 
     open_row["reviewer_decision"] = "REJECT"
@@ -138,7 +177,7 @@ def test_reject_and_blank_never_promote():
 
 
 def test_unresolved_promotes_to_a_terminal_reference_state():
-    open_row = dict(PENDING[0])
+    open_row = _row_for_an_open_slot()
     open_row["reviewer_decision"] = "UNRESOLVED"
     promoted, _ = promote(_gold(), [open_row])
     field = next(r for r in promoted if r["gold_case_id"] == open_row["case_id"])["fields"][open_row["field"]]
@@ -147,7 +186,7 @@ def test_unresolved_promotes_to_a_terminal_reference_state():
 
 
 def test_modify_requires_reviewer_value_state_and_note():
-    open_row = dict(PENDING[0])
+    open_row = _row_for_an_open_slot()
     open_row["reviewer_decision"] = "MODIFY"
     with pytest.raises(PromotionError, match="MODIFY requires"):
         promote(_gold(), [open_row])
