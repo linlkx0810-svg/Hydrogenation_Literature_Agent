@@ -7,6 +7,13 @@ row into `development_gold_field_schema_v1.jsonl`, and it fails closed:
 - `MODIFY`      -> the reviewer's own value and state become Gold, and the row
                    must carry reviewer_value, reviewer_state and reviewer_note
 - `UNRESOLVED`  -> the slot becomes unresolved_reference with reviewer provenance
+
+A promoted value keeps four things together: the source's own wording and unit
+(`reported_value`, `reported_unit`) and the normalized pair (`value`, `unit`).
+A unit conversion never erases what the paper actually wrote. For a text field the
+canonical form is stored in `canonical_value` while `reported_value` keeps the
+source spelling, so a solvent written CF3CH2OH and canonicalized to TFE stays
+readable in both forms.
 - `REJECT`      -> nothing changes; the slot stays open
 - blank         -> nothing changes; the slot stays open
 
@@ -82,7 +89,8 @@ def promote(gold_records: list[dict], reviews: list[dict]) -> tuple[list[dict], 
         if decision == "APPROVE":
             state = (row.get("proposed_state") or "").strip()
             value = _typed(row.get("proposed_value", ""), row.get("unit", ""))
-            note = row.get("review_reason", "")
+            # the reviewer's own words win over the assistant's reasoning
+            note = (row.get("reviewer_note") or "").strip() or row.get("review_reason", "")
         elif decision == "MODIFY":
             for key in ("reviewer_value", "reviewer_state", "reviewer_note"):
                 if not (row.get(key) or "").strip():
@@ -105,11 +113,25 @@ def promote(gold_records: list[dict], reviews: list[dict]) -> tuple[list[dict], 
         if state == "answered" and not locator:
             raise PromotionError(f"{row['review_id']}: answered promotion without an evidence locator")
 
+        reported_value = (row.get("reported_value") or "").strip() or None
+        reported_unit = (row.get("reported_unit") or "").strip() or None
+        normalized_unit = (row.get("unit") or "").strip() or None
+        # A converted number must never stand alone: the source value and its own
+        # unit stay next to the normalized pair, so 50 atm -> 50.6625 bar remains
+        # auditable in both directions.
+        if state == "answered" and normalized_unit and reported_value and not reported_unit:
+            reported_unit = normalized_unit
+
+        canonical = value if isinstance(value, str) else None
+
         field.update(
             {
                 "state": state,
                 "value": value,
-                "reported_value": (row.get("reported_value") or "").strip() or None,
+                "unit": normalized_unit,
+                "reported_value": reported_value,
+                "reported_unit": reported_unit,
+                "canonical_value": canonical or field.get("canonical_value"),
                 "provenance": "HUMAN_REVIEW_CONFIRMED",
                 "source_role": (row.get("source_role") or "").strip() or None,
                 "source_locator": locator or field.get("source_locator"),
@@ -117,6 +139,7 @@ def promote(gold_records: list[dict], reviews: list[dict]) -> tuple[list[dict], 
                 "review_status": "HUMAN_CONFIRMED",
                 "review_decision": decision,
                 "review_id": row["review_id"],
+                "reviewer_note": (row.get("reviewer_note") or "").strip() or None,
                 "note": note,
             }
         )

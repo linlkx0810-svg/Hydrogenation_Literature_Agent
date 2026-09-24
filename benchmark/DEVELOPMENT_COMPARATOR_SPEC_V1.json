@@ -1,0 +1,23 @@
+{
+  "spec_version": "development-comparator-spec-v1",
+  "date": "2026-09-24",
+  "scope": "comparison only",
+  "applies_to": "scoring comparisons between a prediction value and a Gold value on the development set",
+  "does_not_apply_to": [
+    "modules/raw_llm_extractor_v2.py and any raw prediction",
+    "modules/prediction_normalizer.py entity resolution",
+    "modules/extraction_verifier.py and modules/field_verifiers.py evidence checks",
+    "any scientific extraction rule"
+  ],
+  "rule": "An alias group makes two spellings of the same identity compare equal. It never rewrites a prediction, never edits a Gold value, and never changes what a model is asked to output.",
+  "alias_groups": [
+    {
+      "field": "solvent",
+      "identity": "TFE",
+      "aliases": ["CF3CH2OH", "TFE", "2,2,2-trifluoroethanol"],
+      "authority": "human reviewer decision on B01-016, 2026-09-24",
+      "note": "Gold stores reported_value CF3CH2OH beside canonical_value TFE; exact-string equality between the two forms is not required."
+    }
+  ],
+  "open_question": "Other solvent, ligand, catalyst, substrate and product identities still compare by exact normalized string. A comparator policy for those is deliberately deferred until the Gold distribution is known."
+}

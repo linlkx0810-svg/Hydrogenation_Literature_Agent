@@ -1,7 +1,7 @@
 {
   "freeze_version": "development-gold-freeze-v1",
   "artifact": "development_gold_field_schema_v1.jsonl",
-  "sha256": "8c983e8efe739d6cab988ca871d1da6b41c7920d2a5efdee748178949cc16076",
+  "sha256": "3c92a71c58a0f9950ee480e7390659295628b9d75a6a6a96d56e983b4d9253f3",
   "gold_version": "development-gold-field-schema-v1",
   "field_schema_version": "agent-v1-field-schema-v1",
   "frozen": false,
@@ -16,10 +16,10 @@
   "field_slot_count": 144,
   "candidate_ids_sha256": "6d07327c1c5210d227217bd16baf5753f7350687250c7d8d2b556b7995c6feac",
   "state_counts": {
-    "needs_source_review": 106,
+    "needs_source_review": 91,
     "not_reported": 11,
-    "answered": 27
+    "answered": 42
   },
-  "scored_slots": 38,
-  "excluded_slots": 106
+  "scored_slots": 53,
+  "excluded_slots": 91
 }

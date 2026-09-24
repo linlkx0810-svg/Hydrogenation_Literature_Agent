@@ -143,8 +143,8 @@ Decision: [ ] APPROVE  [ ] REJECT  [ ] MODIFY  [ ] UNRESOLVED
 
 ## If this batch is approved
 
-- candidate binding exact: 1 -> 2
-- ambiguous: 3 -> 2
+- candidate binding exact: 2 -> 2
+- ambiguous: 2 -> 2
 - unrepresentable: 8 -> 8
 
 One case would move to `BOUND_EXACT`. One case would move from `AMBIGUOUS_BINDING` to

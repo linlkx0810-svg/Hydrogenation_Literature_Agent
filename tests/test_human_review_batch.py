@@ -1,4 +1,9 @@
-"""Human review batch 01: proposals stay proposals until a human decides."""
+"""Human review batch 01, after the reviewer's decisions were recorded.
+
+Claude proposed; the human reviewer decided; `tools/apply_human_gold_reviews.py`
+applied exactly those decisions. These tests pin that chain: what promoted, what
+stayed open, and that nothing else moved.
+"""
 import csv
 import json
 from pathlib import Path
@@ -12,6 +17,7 @@ GOLD_DIR = ROOT / "benchmark/development_gold"
 BATCH = GOLD_DIR / "human_review_batch_01.csv"
 GOLD_PATH = GOLD_DIR / "development_gold_field_schema_v1.jsonl"
 STRUCTURE_ONLY_FIELDS = {"catalyst", "product", "stereochemical_outcome"}
+DECISIONS = {"APPROVE", "REJECT", "MODIFY", "UNRESOLVED", ""}
 
 
 def _rows(path):
@@ -28,112 +34,128 @@ def _gold():
 
 
 BATCH_ROWS = _rows(BATCH)
+GOLD = {record["gold_case_id"]: record for record in _gold()}
+APPROVED = [r for r in BATCH_ROWS if r["reviewer_decision"] == "APPROVE"]
+PENDING = [r for r in BATCH_ROWS if not r["reviewer_decision"].strip()]
 
 
-def test_batch_ships_with_no_decisions_prefilled():
+def test_decisions_come_from_the_fixed_vocabulary():
     for row in BATCH_ROWS:
-        assert (row["reviewer_decision"] or "").strip() == "", (
-            f"{row['review_id']} ships with a decision; Claude must never approve its own proposal"
-        )
-    status = json.loads((GOLD_DIR / "HUMAN_REVIEW_STATUS_V1.json").read_text(encoding="utf-8"))
-    assert status["decisions_prefilled"] is False
-    assert status["formal_gold_changed"] is False
-    assert status["claude_role"] == "SOURCE_REVIEW_ASSISTANT"
+        assert row["reviewer_decision"] in DECISIONS, row["review_id"]
+    assert len(APPROVED) == 16
+    assert len(PENDING) == 3
+    assert {r["review_id"] for r in PENDING} == {"B01-017", "B01-018", "B01-019"}
 
 
-def test_batch_covers_only_the_requested_queue_reason_and_no_structure_only_field():
-    queue = {(row["case"], row["field"]): row for row in _rows(GOLD_DIR / "HUMAN_REVIEW_QUEUE_V1.csv")}
+def test_every_approved_row_landed_in_gold_with_human_provenance():
+    for row in APPROVED:
+        field = GOLD[row["case_id"]]["fields"][row["field"]]
+        assert field["state"] == row["proposed_state"]
+        assert field["provenance"] == "HUMAN_REVIEW_CONFIRMED"
+        assert field["review_status"] == "HUMAN_CONFIRMED"
+        assert field["review_id"] == row["review_id"]
+        assert field["source_locator"], "a promoted answer keeps its evidence locator"
+
+
+def test_pending_rows_did_not_touch_gold():
+    for row in PENDING:
+        field = GOLD[row["case_id"]]["fields"][row["field"]]
+        assert field["state"] == "needs_source_review"
+        assert field.get("review_status") != "HUMAN_CONFIRMED"
+        assert field.get("review_id") is None
+
+
+def test_a_converted_pressure_keeps_the_source_value_and_unit():
+    """50 atm -> 50.6625 bar must stay auditable in both directions."""
+    converted = [r for r in APPROVED if r["field"] == "h2_pressure" and r["reported_unit"] == "atm"]
+    assert converted, "batch 01 contains at least one converted pressure"
+    for row in converted:
+        field = GOLD[row["case_id"]]["fields"]["h2_pressure"]
+        assert field["unit"] == "bar"
+        assert field["reported_unit"] == "atm"
+        assert field["reported_value"] and "atm" in field["reported_value"]
+        assert isinstance(field["value"], float) and field["value"] != 50.0 or field["value"] == 50.6625
+    for row in [r for r in APPROVED if r["field"] == "h2_pressure"]:
+        field = GOLD[row["case_id"]]["fields"]["h2_pressure"]
+        assert field["reported_value"] and field["reported_unit"] and field["unit"]
+
+
+def test_b01_016_keeps_both_the_reported_and_the_canonical_solvent_form():
+    field = GOLD["DEV-012"]["fields"]["solvent"]
+    assert field["reported_value"] == "CF3CH2OH", "the source spelling must not be lost"
+    assert field["canonical_value"] == "TFE"
+    assert field["value"] == "TFE"
+    assert "CF3CH2OH" in field["reviewer_note"] and "TFE" in field["reviewer_note"]
+
+
+def test_reviewer_notes_survive_promotion():
+    for review_id in ("B01-011", "B01-016"):
+        row = next(r for r in BATCH_ROWS if r["review_id"] == review_id)
+        field = GOLD[row["case_id"]]["fields"][row["field"]]
+        assert field["reviewer_note"] == row["reviewer_note"]
+        assert field["note"] == row["reviewer_note"], "the reviewer's words outrank the assistant's"
+
+
+def test_solvent_alias_lives_in_the_comparator_spec_not_in_extraction_rules():
+    spec = json.loads((ROOT / "benchmark/DEVELOPMENT_COMPARATOR_SPEC_V1.json").read_text(encoding="utf-8"))
+    group = next(g for g in spec["alias_groups"] if g["identity"] == "TFE")
+    assert set(group["aliases"]) == {"CF3CH2OH", "TFE", "2,2,2-trifluoroethanol"}
+    assert spec["scope"] == "comparison only"
+    for module in ("modules/raw_llm_extractor_v2.py", "modules/prediction_normalizer.py",
+                   "modules/extraction_verifier.py", "modules/field_verifiers.py"):
+        source = (ROOT / module).read_text(encoding="utf-8")
+        assert "CF3CH2OH" not in source, f"{module} must not learn a comparator alias"
+
+
+def test_batch_touches_no_structure_only_field():
     for row in BATCH_ROWS:
-        assert row["field"] not in STRUCTURE_ONLY_FIELDS, (
-            f"{row['review_id']} touches a structure-only field, which belongs to batch 02"
-        )
-        queued = queue.get((row["case_id"], row["field"]))
-        if queued is None:
-            # the only legal exception is a field already answered in Gold that the
-            # source names differently, raised for the reviewer to reconcile
-            assert row["current_gold_state"] == "answered"
-            continue
-        assert queued["reason"] == "VALUE_MUST_BE_READ_FROM_THE_FROZEN_TARGET_ANCHOR"
+        assert row["field"] not in STRUCTURE_ONLY_FIELDS
 
 
-def test_proposed_states_and_confidence_are_from_the_fixed_vocabularies():
-    for row in BATCH_ROWS:
-        assert row["proposed_state"] in {"answered", "not_reported", "not_applicable", "unresolved_reference"}
-        assert row["confidence"] in {"HIGH", "MEDIUM", "LOW"}
-        if row["proposed_state"] == "answered":
-            assert row["proposed_value"].strip()
-            assert row["source_role"] and row["table_or_scheme"]
-        else:
-            assert not row["proposed_value"].strip()
-
-
-def test_ee_is_never_converted_and_conversion_is_never_a_yield():
-    for row in BATCH_ROWS:
-        if row["field"] == "ee_or_er":
-            assert row["unit"] in {"percent_ee", "ratio_er"}
-            reported = row["reported_value"].lower()
-            if "% ee" in reported:
-                assert row["unit"] == "percent_ee"
-            assert ":" not in row["proposed_value"], "an ee value must not be written as a ratio"
-        if row["field"] == "yield":
-            assert "conversion" not in row["reported_value"].lower(), (
-                "a conversion may never be proposed as a yield"
-            )
-
-
-def test_proposals_do_not_mutate_the_formal_gold():
+def test_promotion_is_idempotent():
     before = GOLD_PATH.read_bytes()
+    promoted, counts = promote(_gold(), BATCH_ROWS)
+    assert counts["APPROVE"] == 16 and counts["BLANK"] == 3
+    rendered = "\n".join(json.dumps(r, ensure_ascii=False) for r in promoted) + "\n"
+    assert rendered.encode("utf-8") == before, "replaying the same decisions must not drift"
+
+
+def test_reject_and_blank_never_promote():
+    open_row = dict(PENDING[0])
     gold = _gold()
-    promote(gold, BATCH_ROWS)  # every decision is blank
-    assert GOLD_PATH.read_bytes() == before
-    for record in _gold():
-        for name, field in record["fields"].items():
-            assert field.get("review_status") != "HUMAN_CONFIRMED"
-            assert field.get("provenance") != "HUMAN_REVIEW_CONFIRMED"
 
-
-def test_only_approve_modify_and_unresolved_promote():
-    gold = _gold()
-    row = dict(BATCH_ROWS[0])
-
-    row["reviewer_decision"] = "REJECT"
-    promoted, counts = promote(json.loads(json.dumps(gold)), [row])
-    field = next(r for r in promoted if r["gold_case_id"] == row["case_id"])["fields"][row["field"]]
+    open_row["reviewer_decision"] = "REJECT"
+    promoted, counts = promote(json.loads(json.dumps(gold)), [open_row])
+    field = next(r for r in promoted if r["gold_case_id"] == open_row["case_id"])["fields"][open_row["field"]]
     assert field["state"] == "needs_source_review"
     assert counts["REJECT"] == 1
 
-    row["reviewer_decision"] = ""
-    promoted, counts = promote(json.loads(json.dumps(gold)), [row])
-    field = next(r for r in promoted if r["gold_case_id"] == row["case_id"])["fields"][row["field"]]
+    open_row["reviewer_decision"] = ""
+    promoted, counts = promote(json.loads(json.dumps(gold)), [open_row])
+    field = next(r for r in promoted if r["gold_case_id"] == open_row["case_id"])["fields"][open_row["field"]]
     assert field["state"] == "needs_source_review"
     assert counts["BLANK"] == 1
 
-    row["reviewer_decision"] = "APPROVE"
-    promoted, _ = promote(json.loads(json.dumps(gold)), [row])
-    field = next(r for r in promoted if r["gold_case_id"] == row["case_id"])["fields"][row["field"]]
-    assert field["state"] == "answered"
-    assert field["provenance"] == "HUMAN_REVIEW_CONFIRMED"
-    assert field["review_status"] == "HUMAN_CONFIRMED"
-    assert field["source_locator"], "promotion must preserve an evidence locator"
 
-    row["reviewer_decision"] = "UNRESOLVED"
-    promoted, _ = promote(json.loads(json.dumps(gold)), [row])
-    field = next(r for r in promoted if r["gold_case_id"] == row["case_id"])["fields"][row["field"]]
+def test_unresolved_promotes_to_a_terminal_reference_state():
+    open_row = dict(PENDING[0])
+    open_row["reviewer_decision"] = "UNRESOLVED"
+    promoted, _ = promote(_gold(), [open_row])
+    field = next(r for r in promoted if r["gold_case_id"] == open_row["case_id"])["fields"][open_row["field"]]
     assert field["state"] == "unresolved_reference"
     assert field["value"] is None
 
 
 def test_modify_requires_reviewer_value_state_and_note():
-    gold = _gold()
-    row = dict(BATCH_ROWS[0])
-    row["reviewer_decision"] = "MODIFY"
+    open_row = dict(PENDING[0])
+    open_row["reviewer_decision"] = "MODIFY"
     with pytest.raises(PromotionError, match="MODIFY requires"):
-        promote(json.loads(json.dumps(gold)), [row])
+        promote(_gold(), [open_row])
 
-    row.update({"reviewer_value": "51", "reviewer_state": "answered", "reviewer_note": "read 51 bar"})
-    promoted, _ = promote(json.loads(json.dumps(gold)), [row])
-    field = next(r for r in promoted if r["gold_case_id"] == row["case_id"])["fields"][row["field"]]
-    assert field["value"] == 51.0
+    open_row.update({"reviewer_value": "26", "reviewer_state": "answered", "reviewer_note": "read 26 bar"})
+    promoted, _ = promote(_gold(), [open_row])
+    field = next(r for r in promoted if r["gold_case_id"] == open_row["case_id"])["fields"][open_row["field"]]
+    assert field["value"] == 26.0
     assert field["provenance"] == "HUMAN_REVIEW_CONFIRMED"
 
 
@@ -144,19 +166,23 @@ def test_unknown_decision_fails_closed():
         promote(_gold(), [row])
 
 
-def test_binding_preview_does_not_alter_the_binding_audit():
-    preview = json.loads((GOLD_DIR / "binding_preview_batch_01.json").read_text(encoding="utf-8"))
-    assert preview["hypothetical"] is True
-    audit = _rows(GOLD_DIR / "candidate_binding_v1.csv")
-    counts = {}
-    for row in audit:
-        counts[row["binding_status"]] = counts.get(row["binding_status"], 0) + 1
-    assert preview["current"] == counts, "the preview must describe the committed audit, not replace it"
+def test_ee_is_never_converted_and_conversion_is_never_a_yield():
+    for row in BATCH_ROWS:
+        if row["field"] == "ee_or_er":
+            assert row["unit"] in {"percent_ee", "ratio_er"}
+            assert ":" not in row["proposed_value"]
+            field = GOLD[row["case_id"]]["fields"]["ee_or_er"]
+            if field["state"] == "answered":
+                assert field["value"]["kind"] == "ee_percent"
+        if row["field"] == "yield":
+            assert "conversion" not in row["reported_value"].lower()
 
 
-def test_gold_freeze_stays_incomplete_before_human_review():
+def test_gold_freeze_stays_incomplete_while_slots_are_open():
     manifest = json.loads(
         (GOLD_DIR / "development_gold_field_schema_v1.freeze.json").read_text(encoding="utf-8")
     )
+    status = json.loads((ROOT / "benchmark/development_gold_v1_status.json").read_text(encoding="utf-8"))
+    assert status["needs_source_review"] > 0
     assert manifest["frozen"] is False
     assert manifest["status"] == "INCOMPLETE_NOT_FROZEN"

@@ -271,6 +271,7 @@ def test_reaction_taxonomy_is_closed_and_used():
 def test_claude_adjudication_is_never_labelled_human_confirmed():
     import csv as _csv
 
+
     with open(GOLD_DIR / "phase_b_adjudications_v1.csv", newline="", encoding="utf-8-sig") as handle:
         rows = list(_csv.DictReader(handle))
     allowed = {
@@ -281,9 +282,22 @@ def test_claude_adjudication_is_never_labelled_human_confirmed():
     for row in rows:
         assert row["review_status"] in allowed, row["review_status"]
         assert "HUMAN_CONFIRMED" not in row["review_status"]
+
+    # HUMAN_CONFIRMED is legal only on a slot that came through the promotion
+    # tool carrying a reviewer decision. Claude adjudication can never wear it.
+    with open(GOLD_DIR / "human_review_batch_01.csv", newline="", encoding="utf-8-sig") as handle:
+        decided = {
+            row["review_id"]: row["reviewer_decision"].strip()
+            for row in _csv.DictReader(handle)
+        }
     for record in GOLD:
         for field in record["fields"].values():
-            assert (field.get("review_status") or "") != "HUMAN_CONFIRMED"
+            if (field.get("review_status") or "") != "HUMAN_CONFIRMED":
+                continue
+            review_id = field.get("review_id")
+            assert review_id in decided, "a human-confirmed slot must name its review row"
+            assert decided[review_id], "a human-confirmed slot needs a non-blank reviewer decision"
+            assert field.get("provenance") == "HUMAN_REVIEW_CONFIRMED"
 
 
 def test_candidate_binding_uses_ids_and_fixed_root_causes():
