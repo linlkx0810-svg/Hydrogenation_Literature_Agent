@@ -148,8 +148,8 @@ def main() -> int:
         "binding_status",
         "note",
     ]
-    with open(args.out, "w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+    with open(args.out, "w", newline="\n", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 

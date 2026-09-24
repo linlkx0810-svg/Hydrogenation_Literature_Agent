@@ -200,14 +200,9 @@ def run(raw_path: Path, freeze_path: Path, source_path: Path, out_dir: Path) -> 
 
     normalized_path = out_dir / "normalized_predictions.jsonl"
     verified_path = out_dir / "verified_predictions.jsonl"
-    normalized_path.write_text(
-        "\n".join(json.dumps(row, ensure_ascii=False) for row in normalized_rows) + "\n",
-        encoding="utf-8",
-    )
-    verified_path.write_text(
-        "\n".join(json.dumps(row, ensure_ascii=False) for row in verified_rows) + "\n",
-        encoding="utf-8",
-    )
+    for path, rows in ((normalized_path, normalized_rows), (verified_path, verified_rows)):
+        with open(path, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write("\n".join(json.dumps(row, ensure_ascii=False) for row in rows) + "\n")
 
     report = {
         "chain_version": CHAIN_VERSION,
@@ -224,9 +219,8 @@ def run(raw_path: Path, freeze_path: Path, source_path: Path, out_dir: Path) -> 
         "verified_predictions_sha256": _sha(verified_path),
         "candidate_decisions": decisions,
     }
-    (out_dir / "chain_manifest.json").write_text(
-        json.dumps(report, indent=2) + "\n", encoding="utf-8"
-    )
+    with open(out_dir / "chain_manifest.json", "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(report, indent=2) + "\n")
     return report
 
 

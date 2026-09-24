@@ -68,9 +68,8 @@ def main() -> int:
         }
 
     rows, skipped = to_scorer_gold(gold, bindings)
-    Path(args.out).write_text(
-        "\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8"
-    )
+    with open(args.out, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n")
     print(
         json.dumps(
             {

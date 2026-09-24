@@ -153,7 +153,8 @@ def command_extract_raw(args: argparse.Namespace) -> int:
             records.append(record.to_dict())
         rendered = "\n".join(json.dumps(r, ensure_ascii=False) for r in records)
         if args.output:
-            Path(args.output).write_text(rendered + "\n", encoding="utf-8")
+            with open(args.output, "w", encoding="utf-8", newline="\n") as handle:
+                handle.write(rendered + "\n")
             print(f"Wrote {len(records)} raw prediction(s) to {args.output}")
         else:
             print(rendered)
@@ -224,7 +225,8 @@ def command_score(args: argparse.Namespace) -> int:
         return 2
     report = score(records, _read_jsonl(Path(args.verified)), _read_jsonl(Path(args.gold)))
     if args.output:
-        Path(args.output).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        with open(args.output, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(json.dumps(report, indent=2) + "\n")
         print(f"Wrote score report to {args.output}")
     else:
         print(json.dumps(report, indent=2))

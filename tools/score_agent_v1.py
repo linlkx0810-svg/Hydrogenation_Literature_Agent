@@ -306,7 +306,8 @@ def main() -> int:
         return 2
 
     report = score(raw_records, _read_jsonl(args.verified), _read_jsonl(args.gold))
-    Path(args.out).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    with open(args.out, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))
     return 0
 

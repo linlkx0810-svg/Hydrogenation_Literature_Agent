@@ -168,9 +168,8 @@ def main() -> int:
     assert len(records) == 12, f"expected 12 legacy cases, got {len(records)}"
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(
-        "\n".join(json.dumps(r, ensure_ascii=False) for r in records) + "\n", encoding="utf-8"
-    )
+    with open(out, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write("\n".join(json.dumps(r, ensure_ascii=False) for r in records) + "\n")
 
     states = {}
     for record in records:

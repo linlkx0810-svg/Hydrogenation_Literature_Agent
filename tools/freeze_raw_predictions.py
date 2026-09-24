@@ -148,7 +148,8 @@ def freeze(predictions: Path, out: Path) -> dict:
                 f"{out} already freezes a different raw file "
                 f"({previous.get('raw_predictions_sha256')}); refusing to overwrite"
             )
-    out.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    with open(out, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(manifest, indent=2) + "\n")
     return manifest
 
 

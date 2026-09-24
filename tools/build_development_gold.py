@@ -225,10 +225,10 @@ def main() -> int:
     args = parser.parse_args()
 
     records, status = build(Path(args.stage1), Path(args.adjudications))
-    Path(args.out).write_text(
-        "\n".join(json.dumps(r, ensure_ascii=False) for r in records) + "\n", encoding="utf-8"
-    )
-    Path(args.status).write_text(json.dumps(status, indent=2) + "\n", encoding="utf-8")
+    with open(args.out, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write("\n".join(json.dumps(r, ensure_ascii=False) for r in records) + "\n")
+    with open(args.status, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(status, indent=2) + "\n")
     print(json.dumps(status, indent=2))
     return 0
 
