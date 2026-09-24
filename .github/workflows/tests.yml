@@ -55,6 +55,14 @@ jobs:
           python agent.py score --raw raw_predictions.jsonl             --freeze raw_predictions.freeze.json             --verified chain_out/verified_predictions.jsonl             --gold examples/agent_v1_chain_gold_example.jsonl             --output chain_out/score_report.json
           python -c "import hashlib,json,pathlib;m=json.loads(pathlib.Path('raw_predictions.freeze.json').read_text());d=hashlib.sha256(pathlib.Path('raw_predictions.jsonl').read_bytes()).hexdigest();assert d==m['raw_predictions_sha256'], 'raw artifact was modified downstream';print('raw artifact still matches its freeze')"
 
+      - name: Rebuild the development Gold and check its freeze gate
+        run: |
+          python tools/build_development_gold_stage1.py --out /tmp/stage1.jsonl
+          python tools/build_development_gold.py --stage1 /tmp/stage1.jsonl --out /tmp/gold.jsonl --status /tmp/gold_status.json
+          python -c "import json,pathlib;a=json.loads(pathlib.Path('benchmark/development_gold_v1_status.json').read_text());b=json.loads(pathlib.Path('/tmp/gold_status.json').read_text());assert a==b,'committed Gold status is not reproducible from the committed inputs';print('development Gold rebuild is reproducible')"
+          python tools/freeze_development_gold.py --gold benchmark/development_gold/development_gold_field_schema_v1.jsonl --out /tmp/gold.freeze.json || test $? -eq 3
+          python tools/freeze_development_gold.py --gold benchmark/development_gold/development_gold_field_schema_v1.jsonl --out benchmark/development_gold/development_gold_field_schema_v1.freeze.json --verify
+
       - name: Smoke-test unified agent CLI
         run: |
           python agent.py benchmark --dataset examples/benchmark_synthetic.jsonl

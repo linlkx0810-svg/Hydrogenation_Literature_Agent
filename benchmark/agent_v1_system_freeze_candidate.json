@@ -1,7 +1,7 @@
 {
   "artifact": "agent-v1-system-freeze-candidate",
   "artifact_kind": "NOT_A_BLIND_EVALUATION_FREEZE",
-  "date": "2026-09-23",
+  "date": "2026-09-24",
   "git_branch": "agent-v1-ligand-verifier",
   "git_commit": "cb48b2d439b272b8c1740b0d1de197a01e3bc98f",
   "scope_note": "Developer-side system definition only. It binds no blind cohort, authorizes no run, and must not be cited as an evaluation freeze. prospective-blind-v3 stands at 8/12 and remains custodian-sealed.",
@@ -49,14 +49,20 @@
     "verifier_coverage_contract": {
       "state": "VERIFIER_COVERAGE_CONTRACT_FROZEN",
       "detail": "11 of 12 fields have a verifier; reaction is explicitly excluded. catalyst and product accept only literal evidence and can never block; stereochemical_outcome reads explicit descriptors only. Coverage is reported as a rate over candidate x field units."
+    },
+    "development_gold": {
+      "state": "PARTIAL",
+      "detail": "development-gold-field-schema-v1 exists for all 12 cases and 144 slots, but the populated legacy Gold artifact is unrecoverable, so only 15 slots are answered and 11 are source-reviewed not_reported. 118 slots still need a chemist's source pass and are excluded from every denominator. The freeze tool refuses to mark the Gold frozen while that is true."
     }
   },
   "blocking_gaps": [
+    "118 of 144 development Gold slots still need source adjudication; the populated legacy Gold v1 artifact is unrecoverable",
+    "FIELD_SCHEMA_V1 defines no controlled vocabulary for `reaction` (SCHEMA_DEFINITION_GAP), so its 12 Gold slots stay unadjudicated",
+    "3 of 12 Gold cases cannot be bound to an evidence-builder candidate chunk (CANDIDATE_BINDING_FAILURE)",
     "OpenAI SDK exact version is not frozen",
     "the benchmark Python runtime is not pinned to one interpreter version",
     "no live provider call has been made against gpt-5.6-sol",
-    "no development-set gold exists in the FIELD_SCHEMA_V1 format",
-    "chemical identity comparators are string-level only: substrate and solvent verdicts depend on the candidate builder's controlled vocabularies, and catalyst and product accept only literal mentions"
+    "chemical identity comparators are string-level only"
   ],
   "validation_data_used": [
     "examples/benchmark_synthetic.jsonl",
@@ -95,5 +101,21 @@
     "rule_baseline_tool": "tools/run_trust_benchmark.py reports rule_baseline, not raw",
     "formal_raw_llm": "llm-extractor-v2 only",
     "historical_files_rewritten": false
+  },
+  "development_gold": {
+    "artifact": "benchmark/development_gold/development_gold_field_schema_v1.jsonl",
+    "status": "INCOMPLETE_NOT_FROZEN",
+    "development_only": true,
+    "blind_eligible": false,
+    "lineage": "legacy Gold v1 (8 fields) + source adjudication -> development Gold FIELD_SCHEMA_V1",
+    "counts": {
+      "cases": 12,
+      "field_slot_count": 144,
+      "answered": 15,
+      "not_reported": 11,
+      "unresolved_reference": 0,
+      "needs_source_review": 118,
+      "scored_slots": 26
+    }
   }
 }

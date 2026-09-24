@@ -1,0 +1,77 @@
+{
+  "gold_version": "development-gold-field-schema-v1",
+  "field_schema_version": "agent-v1-field-schema-v1",
+  "cases": 12,
+  "field_slot_count": 144,
+  "answered": 15,
+  "not_reported": 11,
+  "not_applicable": 0,
+  "unresolved_reference": 0,
+  "needs_source_review": 118,
+  "scored_slots": 26,
+  "excluded_from_denominator": 118,
+  "source_confirmed": 15,
+  "legacy_migrated": 73,
+  "newly_adjudicated": 18,
+  "provenance_counts": {
+    "LEGACY_GOLD_LOSSLESS_MIGRATION": 64,
+    "LEGACY_SOURCE_REVIEW_RECORD": 13,
+    "NON_EQUIVALENT_REQUIRES_REVIEW": 9,
+    "NOT_IN_LEGACY_GOLD": 44,
+    "SOURCE_REVIEW_RECORD_SCOPE": 3,
+    "LEGACY_GOLD_TYPED_MIGRATION": 9,
+    "LEGACY_TARGET_ANCHOR": 2
+  },
+  "field_breakdown": {
+    "h2_pressure": {
+      "needs_source_review": 11,
+      "answered": 1
+    },
+    "temperature": {
+      "needs_source_review": 10,
+      "not_reported": 1,
+      "answered": 1
+    },
+    "reaction_time": {
+      "not_reported": 1,
+      "needs_source_review": 10,
+      "answered": 1
+    },
+    "solvent": {
+      "needs_source_review": 10,
+      "answered": 2
+    },
+    "yield": {
+      "not_reported": 6,
+      "answered": 1,
+      "needs_source_review": 5
+    },
+    "ligand": {
+      "needs_source_review": 10,
+      "answered": 2
+    },
+    "ee_or_er": {
+      "answered": 3,
+      "needs_source_review": 9
+    },
+    "substrate": {
+      "needs_source_review": 9,
+      "answered": 3
+    },
+    "reaction": {
+      "needs_source_review": 12
+    },
+    "catalyst": {
+      "needs_source_review": 11,
+      "answered": 1
+    },
+    "product": {
+      "needs_source_review": 12
+    },
+    "stereochemical_outcome": {
+      "not_reported": 3,
+      "needs_source_review": 9
+    }
+  },
+  "completeness": "INCOMPLETE"
+}
