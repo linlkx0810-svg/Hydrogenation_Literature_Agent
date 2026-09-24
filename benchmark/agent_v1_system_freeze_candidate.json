@@ -52,13 +52,20 @@
     },
     "development_gold": {
       "state": "PARTIAL",
-      "detail": "development-gold-field-schema-v1 exists for all 12 cases and 144 slots, but the populated legacy Gold artifact is unrecoverable, so only 15 slots are answered and 11 are source-reviewed not_reported. 118 slots still need a chemist's source pass and are excluded from every denominator. The freeze tool refuses to mark the Gold frozen while that is true."
+      "detail": "27 answered, 11 source-reviewed not_reported, 106 still open and queued for human review. The freeze tool refuses to mark the Gold frozen while any slot is open."
+    },
+    "reaction_taxonomy": {
+      "state": "YES",
+      "detail": "REACTION_TAXONOMY_V1 reuses the frozen Stage 5b reaction_type and substrate_class vocabularies; 24 closed labels; SCHEMA_DEFINITION_GAP(reaction) closed by schema amendment 1."
+    },
+    "candidate_binding": {
+      "state": "PARTIAL",
+      "detail": "1 BOUND_EXACT, 3 AMBIGUOUS_BINDING, 8 UNREPRESENTABLE_V1. 11 of the 12 root causes are INSUFFICIENT_ADJUDICATED_VALUES, so binding is currently blocked by Gold completeness rather than by the evidence builder."
     }
   },
   "blocking_gaps": [
-    "118 of 144 development Gold slots still need source adjudication; the populated legacy Gold v1 artifact is unrecoverable",
-    "FIELD_SCHEMA_V1 defines no controlled vocabulary for `reaction` (SCHEMA_DEFINITION_GAP), so its 12 Gold slots stay unadjudicated",
-    "3 of 12 Gold cases cannot be bound to an evidence-builder candidate chunk (CANDIDATE_BINDING_FAILURE)",
+    "106 of 144 development Gold slots are still open and queued for human review; Claude adjudication is provisional and is never labelled human-confirmed",
+    "candidate binding: 1 of 12 cases binds exactly; the rest wait on Gold adjudication (11) or on a builder limitation (0 confirmed so far)",
     "OpenAI SDK exact version is not frozen",
     "the benchmark Python runtime is not pinned to one interpreter version",
     "no live provider call has been made against gpt-5.6-sol",
@@ -111,11 +118,11 @@
     "counts": {
       "cases": 12,
       "field_slot_count": 144,
-      "answered": 15,
+      "answered": 27,
       "not_reported": 11,
       "unresolved_reference": 0,
-      "needs_source_review": 118,
-      "scored_slots": 26
+      "needs_source_review": 106,
+      "scored_slots": 38
     }
   }
 }

@@ -16,9 +16,10 @@
       "type": "categorical_text",
       "definition": "The transformation performed in this candidate, as a controlled reaction type (for example asymmetric hydrogenation of a C=O, C=N or C=C bond).",
       "unit": null,
-      "canonicalization": "controlled vocabulary; case-insensitive match after whitespace normalization",
+      "canonicalization": "controlled vocabulary defined by benchmark/REACTION_TAXONOMY_V1.json (label form <reaction_type>.<substrate_class>); case-insensitive exact match",
       "evidence_requirement": "the reaction type must be stated or unambiguously named in the bound evidence window",
-      "scored": true
+      "scored": true,
+      "vocabulary": "benchmark/REACTION_TAXONOMY_V1.json"
     },
     {
       "name": "catalyst",
@@ -134,5 +135,14 @@
     "not_applicable is removed from every denominator",
     "not_reported with a null prediction is a correct abstention, not an answer",
     "a null prediction against a non-null gold is a miss, not an error of value"
+  ],
+  "schema_amendments": [
+    {
+      "amendment": 1,
+      "date": "2026-09-24",
+      "change": "the reaction field now cites REACTION_TAXONOMY_V1 as its controlled vocabulary",
+      "field_set_changed": false,
+      "closes": "SCHEMA_DEFINITION_GAP(reaction)"
+    }
   ]
 }

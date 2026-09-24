@@ -244,3 +244,102 @@ def test_scorer_accepts_the_development_gold_and_excludes_unadjudicated_slots(tm
     assert report["a_raw_extractor"]["correct"] == sum(
         1 for f in gold_row["fields"].values() if f["state"] == "answered"
     )
+
+
+def test_reaction_taxonomy_is_closed_and_used():
+    taxonomy = json.loads((ROOT / "benchmark/REACTION_TAXONOMY_V1.json").read_text(encoding="utf-8"))
+    allowed = set(taxonomy["allowed_labels"])
+    assert taxonomy["taxonomy_version"] == "reaction-taxonomy-v1"
+    assert taxonomy["pbv3_referenced"] is False
+    assert "mixed_or_multiple" not in " ".join(allowed)
+
+    schema = json.loads((ROOT / "benchmark/FIELD_SCHEMA_V1.json").read_text(encoding="utf-8"))
+    reaction = next(f for f in schema["fields"] if f["name"] == "reaction")
+    assert reaction["vocabulary"] == "benchmark/REACTION_TAXONOMY_V1.json"
+    assert schema["schema_amendments"][0]["closes"] == "SCHEMA_DEFINITION_GAP(reaction)"
+    assert schema["field_count"] == 12
+
+    for record in GOLD:
+        field = record["fields"]["reaction"]
+        if field["state"] != "answered":
+            continue
+        assert field["value"] in allowed, f"{record['gold_case_id']} uses an ad-hoc reaction label"
+        for forbidden in ("ee", "yield", "catalyst", "ligand"):
+            assert forbidden not in field["value"].split(".")[0]
+
+
+def test_claude_adjudication_is_never_labelled_human_confirmed():
+    import csv as _csv
+
+    with open(GOLD_DIR / "phase_b_adjudications_v1.csv", newline="", encoding="utf-8-sig") as handle:
+        rows = list(_csv.DictReader(handle))
+    allowed = {
+        "LEGACY_GOLD_RECOVERED", "LEGACY_STATUS_MIGRATED", "PROVISIONAL_SOURCE_ADJUDICATION",
+        "SOURCE_EXPLICIT", "SOURCE_REVIEWED_NOT_REPORTED", "UNRESOLVED_REFERENCE",
+        "SOURCE_CONFIRMED",
+    }
+    for row in rows:
+        assert row["review_status"] in allowed, row["review_status"]
+        assert "HUMAN_CONFIRMED" not in row["review_status"]
+    for record in GOLD:
+        for field in record["fields"].values():
+            assert (field.get("review_status") or "") != "HUMAN_CONFIRMED"
+
+
+def test_candidate_binding_uses_ids_and_fixed_root_causes():
+    import csv as _csv
+
+    from tools.audit_candidate_binding import BINDING_STATUSES, ROOT_CAUSES
+
+    with open(GOLD_DIR / "candidate_binding_v1.csv", newline="", encoding="utf-8-sig") as handle:
+        rows = list(_csv.DictReader(handle))
+    assert len(rows) == 12
+    assert len({row["gold_case_id"] for row in rows}) == 12
+    for row in rows:
+        assert row["binding_status"] in BINDING_STATUSES
+        assert row["root_cause"] in ROOT_CAUSES
+        if row["binding_status"].startswith("BOUND"):
+            assert row["candidate_id"] and row["source_chunk_id"]
+            assert row["binding_method"] == "gold_value_pin"
+        else:
+            assert not row["candidate_id"]
+
+    source = (ROOT / "tools/audit_candidate_binding.py").read_text(encoding="utf-8")
+    for banned in ("FIRST_CANDIDATE", "INDEX_MATCH", "candidates[0]", "zip("):
+        assert banned not in source
+
+
+def test_builder_has_no_paper_specific_hacks():
+    for name in ("modules/reaction_candidate_extraction.py", "tools/audit_candidate_binding.py"):
+        source = (ROOT / name).read_text(encoding="utf-8")
+        assert "10.1021/" not in source and "10.1002/" not in source, f"{name} references a DOI"
+        assert "DEV-0" not in source, f"{name} hard-codes a development case"
+
+
+def test_gold_truth_is_independent_of_candidate_binding():
+    """A binding failure must never weaken a Gold value."""
+    import csv as _csv
+
+    with open(GOLD_DIR / "candidate_binding_v1.csv", newline="", encoding="utf-8-sig") as handle:
+        binding = {row["gold_case_id"]: row["binding_status"] for row in _csv.DictReader(handle)}
+    for record in GOLD:
+        if binding.get(record["gold_case_id"]) in {"UNREPRESENTABLE_V1", "AMBIGUOUS_BINDING"}:
+            answered = [f for f in record["fields"].values() if f["state"] == "answered"]
+            assert answered, "an unbound case still keeps its adjudicated Gold values"
+
+
+def test_human_review_queue_covers_every_open_slot():
+    import csv as _csv
+
+    with open(GOLD_DIR / "HUMAN_REVIEW_QUEUE_V1.csv", newline="", encoding="utf-8-sig") as handle:
+        rows = list(_csv.DictReader(handle))
+    open_slots = {
+        (record["gold_case_id"], name)
+        for record in GOLD
+        for name, field in record["fields"].items()
+        if field["state"] in {"needs_source_review", "unresolved_reference"}
+    }
+    assert {(row["case"], row["field"]) for row in rows} == open_slots
+    for row in rows:
+        assert row["decision_needed"].endswith("?") or row["decision_needed"].endswith(".")
+        assert "value" not in row or not row.get("value")
