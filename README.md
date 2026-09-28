@@ -10,6 +10,12 @@ Catalysis papers report reaction conditions and performance in inconsistent form
 
 This project implements that pipeline as a deterministic baseline that can later be compared with LLM-assisted extraction using the same evaluation framework.
 
+## Current status
+
+- The `main` branch contains the v1 rule-based pipeline (Stages 1–5), synthetic regression tests, and CI.
+- Catalyst/ligand identity normalization, field-level evidence verification, and development-set curation are under development on separate branches and are not yet merged.
+- No curated literature dataset and no benchmark results on real papers are distributed in this repository. All files under `examples/` are synthetic and are not extracted from any publication.
+
 ## Architecture
 
 ```text
@@ -131,7 +137,7 @@ Hydrogenation_Literature_Agent/
 │   ├── test_reaction_data_extraction.py
 │   └── test_reaction_candidate_extraction.py
 ├── examples/
-│   ├── example_extraction_output.csv
+│   ├── example_extraction_output.csv   # synthetic, schema illustration only
 │   └── benchmark_synthetic.jsonl
 ├── docs/
 │   ├── methodology.md

@@ -46,11 +46,20 @@ literature search, PDF download, or manually verified reaction-data extraction.
 
 ---
 
-## Planned for v1.1.0
+## Changes on main after v1.0.0 (2026-08-28)
+
+- Reaction-level candidate extraction (Stage 5B) with evidence offsets
+- Benchmark harness (`tools/run_benchmark.py`) with a synthetic dataset
+- Regression tests for Stage 5 extraction and GitHub Actions CI
+- Validation protocol documentation (`docs/validation_protocol.md`)
+
+---
+
+## Planned
 
 - Shell scripts for Mac/Linux users
 - Optional LLM-assisted extraction (GPT-4o / Claude) as an alternative to
   regex in Stage 5
 - Structured output in JSON-LD and CSV in addition to Excel
 - Docker container for environment reproducibility
-- Unit test suite for screening and extraction modules
+- Tests for the search and screening modules
