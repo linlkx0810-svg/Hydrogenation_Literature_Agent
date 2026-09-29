@@ -1,0 +1,211 @@
+{
+  "taxonomy_version": "reaction-taxonomy-v1",
+  "date": "2026-09-24",
+  "bound_field": "reaction",
+  "field_schema": "agent-v1-field-schema-v1",
+  "origin": "reused from the frozen Stage 5b controlled vocabularies of the Fe/Ni corpus; no label was invented for the 12 development cases",
+  "source_vocabularies": {
+    "vocab_reaction_type.csv": {
+      "path": "data/stage5b_reaction_level_schema/controlled_vocabularies/vocab_reaction_type.csv",
+      "sha256": "50ffbd23721223b14a718961bec085db17ff7f58cbe58cafb9b831802a47e5cb",
+      "values": [
+        "asymmetric_hydrogenation",
+        "transfer_or_relay_hydrogenation",
+        "reductive_hydroamination",
+        "other_source_reported"
+      ]
+    },
+    "vocab_substrate_class.csv": {
+      "path": "data/stage5b_reaction_level_schema/controlled_vocabularies/vocab_substrate_class.csv",
+      "sha256": "f02f409a28914a4fa620179bbdb080b7c414767e3668184b36a16c8510674f4d",
+      "values": [
+        "ketone",
+        "imine",
+        "alkene",
+        "heteroarene",
+        "alkyne_tandem",
+        "mixed_or_multiple",
+        "other"
+      ]
+    }
+  },
+  "label_form": "<reaction_type>.<substrate_class>",
+  "rules": [
+    "a label names the transformation class only",
+    "a label never contains a catalyst, a ligand, a yield, an ee or a substrate name",
+    "the same transformation always takes the same label",
+    "mixed_or_multiple is not a legal Gold label: a Gold target is one reaction",
+    "a label is assigned from the frozen corpus classification of the paper plus the substrate of the frozen target anchor"
+  ],
+  "allowed_labels": [
+    "asymmetric_hydrogenation.alkene",
+    "asymmetric_hydrogenation.alkyne_tandem",
+    "asymmetric_hydrogenation.heteroarene",
+    "asymmetric_hydrogenation.imine",
+    "asymmetric_hydrogenation.ketone",
+    "asymmetric_hydrogenation.other",
+    "other_source_reported.alkene",
+    "other_source_reported.alkyne_tandem",
+    "other_source_reported.heteroarene",
+    "other_source_reported.imine",
+    "other_source_reported.ketone",
+    "other_source_reported.other",
+    "reductive_hydroamination.alkene",
+    "reductive_hydroamination.alkyne_tandem",
+    "reductive_hydroamination.heteroarene",
+    "reductive_hydroamination.imine",
+    "reductive_hydroamination.ketone",
+    "reductive_hydroamination.other",
+    "transfer_or_relay_hydrogenation.alkene",
+    "transfer_or_relay_hydrogenation.alkyne_tandem",
+    "transfer_or_relay_hydrogenation.heteroarene",
+    "transfer_or_relay_hydrogenation.imine",
+    "transfer_or_relay_hydrogenation.ketone",
+    "transfer_or_relay_hydrogenation.other"
+  ],
+  "definitions": {
+    "asymmetric_hydrogenation.ketone": {
+      "reaction_type": "asymmetric_hydrogenation",
+      "substrate_class": "ketone",
+      "definition": "Direct asymmetric hydrogenation of an unsaturated substrate on a ketone/carbonyl substrate"
+    },
+    "asymmetric_hydrogenation.imine": {
+      "reaction_type": "asymmetric_hydrogenation",
+      "substrate_class": "imine",
+      "definition": "Direct asymmetric hydrogenation of an unsaturated substrate on a imine or c=n substrate"
+    },
+    "asymmetric_hydrogenation.alkene": {
+      "reaction_type": "asymmetric_hydrogenation",
+      "substrate_class": "alkene",
+      "definition": "Direct asymmetric hydrogenation of an unsaturated substrate on a c=c substrate"
+    },
+    "asymmetric_hydrogenation.heteroarene": {
+      "reaction_type": "asymmetric_hydrogenation",
+      "substrate_class": "heteroarene",
+      "definition": "Direct asymmetric hydrogenation of an unsaturated substrate on a aromatic heterocycle hydrogenation substrate"
+    },
+    "asymmetric_hydrogenation.alkyne_tandem": {
+      "reaction_type": "asymmetric_hydrogenation",
+      "substrate_class": "alkyne_tandem",
+      "definition": "Direct asymmetric hydrogenation of an unsaturated substrate on a alkyne plus amine or tandem reductive hydroamination case"
+    },
+    "asymmetric_hydrogenation.other": {
+      "reaction_type": "asymmetric_hydrogenation",
+      "substrate_class": "other",
+      "definition": "Direct asymmetric hydrogenation of an unsaturated substrate on a other source-verified substrate class"
+    },
+    "transfer_or_relay_hydrogenation.ketone": {
+      "reaction_type": "transfer_or_relay_hydrogenation",
+      "substrate_class": "ketone",
+      "definition": "H2-driven relay/shuttle or biomimetic transfer process on a ketone/carbonyl substrate"
+    },
+    "transfer_or_relay_hydrogenation.imine": {
+      "reaction_type": "transfer_or_relay_hydrogenation",
+      "substrate_class": "imine",
+      "definition": "H2-driven relay/shuttle or biomimetic transfer process on a imine or c=n substrate"
+    },
+    "transfer_or_relay_hydrogenation.alkene": {
+      "reaction_type": "transfer_or_relay_hydrogenation",
+      "substrate_class": "alkene",
+      "definition": "H2-driven relay/shuttle or biomimetic transfer process on a c=c substrate"
+    },
+    "transfer_or_relay_hydrogenation.heteroarene": {
+      "reaction_type": "transfer_or_relay_hydrogenation",
+      "substrate_class": "heteroarene",
+      "definition": "H2-driven relay/shuttle or biomimetic transfer process on a aromatic heterocycle hydrogenation substrate"
+    },
+    "transfer_or_relay_hydrogenation.alkyne_tandem": {
+      "reaction_type": "transfer_or_relay_hydrogenation",
+      "substrate_class": "alkyne_tandem",
+      "definition": "H2-driven relay/shuttle or biomimetic transfer process on a alkyne plus amine or tandem reductive hydroamination case"
+    },
+    "transfer_or_relay_hydrogenation.other": {
+      "reaction_type": "transfer_or_relay_hydrogenation",
+      "substrate_class": "other",
+      "definition": "H2-driven relay/shuttle or biomimetic transfer process on a other source-verified substrate class"
+    },
+    "reductive_hydroamination.ketone": {
+      "reaction_type": "reductive_hydroamination",
+      "substrate_class": "ketone",
+      "definition": "Tandem hydroamination/reduction or in situ imine hydrogenation on a ketone/carbonyl substrate"
+    },
+    "reductive_hydroamination.imine": {
+      "reaction_type": "reductive_hydroamination",
+      "substrate_class": "imine",
+      "definition": "Tandem hydroamination/reduction or in situ imine hydrogenation on a imine or c=n substrate"
+    },
+    "reductive_hydroamination.alkene": {
+      "reaction_type": "reductive_hydroamination",
+      "substrate_class": "alkene",
+      "definition": "Tandem hydroamination/reduction or in situ imine hydrogenation on a c=c substrate"
+    },
+    "reductive_hydroamination.heteroarene": {
+      "reaction_type": "reductive_hydroamination",
+      "substrate_class": "heteroarene",
+      "definition": "Tandem hydroamination/reduction or in situ imine hydrogenation on a aromatic heterocycle hydrogenation substrate"
+    },
+    "reductive_hydroamination.alkyne_tandem": {
+      "reaction_type": "reductive_hydroamination",
+      "substrate_class": "alkyne_tandem",
+      "definition": "Tandem hydroamination/reduction or in situ imine hydrogenation on a alkyne plus amine or tandem reductive hydroamination case"
+    },
+    "reductive_hydroamination.other": {
+      "reaction_type": "reductive_hydroamination",
+      "substrate_class": "other",
+      "definition": "Tandem hydroamination/reduction or in situ imine hydrogenation on a other source-verified substrate class"
+    },
+    "other_source_reported.ketone": {
+      "reaction_type": "other_source_reported",
+      "substrate_class": "ketone",
+      "definition": "Other source-reported molecular-H2 asymmetric reduction on a ketone/carbonyl substrate"
+    },
+    "other_source_reported.imine": {
+      "reaction_type": "other_source_reported",
+      "substrate_class": "imine",
+      "definition": "Other source-reported molecular-H2 asymmetric reduction on a imine or c=n substrate"
+    },
+    "other_source_reported.alkene": {
+      "reaction_type": "other_source_reported",
+      "substrate_class": "alkene",
+      "definition": "Other source-reported molecular-H2 asymmetric reduction on a c=c substrate"
+    },
+    "other_source_reported.heteroarene": {
+      "reaction_type": "other_source_reported",
+      "substrate_class": "heteroarene",
+      "definition": "Other source-reported molecular-H2 asymmetric reduction on a aromatic heterocycle hydrogenation substrate"
+    },
+    "other_source_reported.alkyne_tandem": {
+      "reaction_type": "other_source_reported",
+      "substrate_class": "alkyne_tandem",
+      "definition": "Other source-reported molecular-H2 asymmetric reduction on a alkyne plus amine or tandem reductive hydroamination case"
+    },
+    "other_source_reported.other": {
+      "reaction_type": "other_source_reported",
+      "substrate_class": "other",
+      "definition": "Other source-reported molecular-H2 asymmetric reduction on a other source-verified substrate class"
+    }
+  },
+  "examples_from_exposed_development_data": {
+    "FE-H2-AH-0006": {
+      "label": "asymmetric_hydrogenation.ketone",
+      "corpus_scope_tier": "CORE_DIRECT_H2",
+      "corpus_substrate_type": "ketones/carbonyls"
+    },
+    "NI-H2-AH-0031": {
+      "label": "asymmetric_hydrogenation.imine",
+      "corpus_scope_tier": "CORE_DIRECT_H2",
+      "corpus_substrate_type": "N-sulfonyl imines"
+    },
+    "NI-H2-AH-0007": {
+      "label": "asymmetric_hydrogenation.alkene",
+      "corpus_scope_tier": "CORE_DIRECT_H2",
+      "corpus_substrate_type": "alpha beta-unsaturated esters"
+    },
+    "FE-H2-AH-0022": {
+      "label": "transfer_or_relay_hydrogenation.heteroarene",
+      "corpus_scope_tier": "EXTENDED_H2_RELAY",
+      "corpus_substrate_type": "heteroarenes; benzoxazinones"
+    }
+  },
+  "pbv3_referenced": false
+}

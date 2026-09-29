@@ -1,0 +1,21 @@
+{
+  "baseline_name": "AH-Literature-Agent-Baseline-v1.0",
+  "evaluation_unit": "reaction_x_field",
+  "fields": [
+    "reaction",
+    "catalyst",
+    "ligand",
+    "substrate",
+    "product",
+    "conditions",
+    "yield",
+    "selectivity"
+  ],
+  "systems_to_compare": ["raw_llm", "verifier"],
+  "blind_policy": {
+    "paper_block_holdout": true,
+    "development_blind_doi_overlap_must_equal": 0,
+    "development_blind_paper_id_overlap_must_equal": 0,
+    "no_prompt_or_rule_change_after_blind_opened": true
+  }
+}

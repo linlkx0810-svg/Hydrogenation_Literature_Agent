@@ -1,0 +1,227 @@
+{
+  "manifest_version": "agent-v1-execution-manifest-v1",
+  "date": "2026-09-23",
+  "agent_version": "agent-v1.0-candidate",
+  "git_branch": "agent-v1-ligand-verifier",
+  "git_commit": "cb48b2d439b272b8c1740b0d1de197a01e3bc98f",
+  "execution_graph_doc": "docs/AGENT_V1_EXECUTION_GRAPH.md",
+  "evaluation_unit": "reaction_candidate_chunk x field",
+  "candidate_builder": {
+    "module_path": "modules/reaction_candidate_extraction.py",
+    "function": "extract_reaction_candidates",
+    "git_blob_sha": "cb9f5b38ff143834e656665a3a3961b8539899c3",
+    "policy": "anchor sentence matching the ee or yield regex, context_sentences=2, duplicate windows dropped on (start,end)",
+    "context_sentences": 2,
+    "candidate_selection": "ALL_DETERMINISTIC_CANDIDATES",
+    "manual_target_selection": false,
+    "ocr_allowed": false,
+    "regex_field_values_role": "SELECTION_SIGNAL_AND_RULE_BASELINE_ONLY_NOT_SCORED_AS_AGENT_OUTPUT",
+    "status": "ACTIVE_IN_FORMAL_RUN"
+  },
+  "raw_llm_extractor": {
+    "version": "llm-extractor-v2",
+    "prompt_version": "llm-extractor-prompt-v2",
+    "structured_output_schema": "raw-extraction-schema-v2",
+    "module_path": "modules/raw_llm_extractor_v2.py",
+    "git_blob_sha": "d300466921f7223dfe19f7bfe5b61cbfebe5a48f",
+    "present_on_this_branch": true,
+    "field_source_of_truth": "benchmark/FIELD_SCHEMA_V1.json",
+    "field_count": 12,
+    "abstention_reasons": [
+      "not_reported",
+      "not_applicable",
+      "unresolved",
+      "ambiguous"
+    ],
+    "offline_modes": [
+      "dry-run request envelopes",
+      "saved-response replay"
+    ],
+    "status": "ACTIVE_IN_FORMAL_RUN"
+  },
+  "model_runtime": {
+    "provider": "OpenAI",
+    "api_family": "Responses API",
+    "model_id": "gpt-5.6-sol",
+    "provider_adapter_version": "openai-responses-json-v1",
+    "provider_adapter_path": "modules/openai_responses_provider.py",
+    "present_on_this_branch": true,
+    "structured_output": "strict_json_schema",
+    "reasoning_effort": "medium",
+    "temperature": null,
+    "top_p": null,
+    "seed": "unsupported/unset",
+    "seed_note": "The Responses API exposes no deterministic seed for this model. Reproducibility is claimed only for the deterministic stages.",
+    "openai_sdk_version": "UNRESOLVED_BEFORE_FREEZE",
+    "status": "PARTIAL_SDK_VERSION_UNRESOLVED",
+    "provider_adapter_git_blob_sha": "56519bf43d7b267d83023ca6491a7686bd48a9d9"
+  },
+  "normalizer": {
+    "version": "prediction-normalizer-v1",
+    "module_path": "modules/prediction_normalizer.py",
+    "git_blob_sha": "cbbc30be4f7ab31d6258f568c5c7bce3365e93a2",
+    "active_fields": [
+      "ligand"
+    ],
+    "other_fields": "PASS_THROUGH_V1",
+    "keeps_raw_and_canonical": true,
+    "policy": "explicit name resolves; paper-local alias resolves only from an explicit in-source definition; conflict is ambiguous; undefined alias is unresolved; no cross-paper inference",
+    "status": "ACTIVE_IN_FORMAL_RUN"
+  },
+  "verifier": {
+    "version": "evidence-verifier-v1.1",
+    "verifier_coverage_contract": "verifier-coverage-contract-v1",
+    "coverage_contract_path": "benchmark/VERIFIER_COVERAGE_V1.json",
+    "module_paths": [
+      "modules/extraction_verifier.py",
+      "modules/field_verifiers.py"
+    ],
+    "git_blob_sha": "bd8f824ccd74ce0a89b50a1baaec844fa7b7090f",
+    "extended_checks_git_blob_sha": "87ba780a1dcacd698968a8005467090ca424f475",
+    "kind": "deterministic",
+    "calls_model": false,
+    "may_replace_values": false,
+    "normalizes": false,
+    "performs_recovery_extraction": false,
+    "field_outcomes": [
+      "supported",
+      "partial",
+      "unsupported",
+      "unresolved",
+      "ambiguous",
+      "not_checked_v1",
+      "not_verifiable_v1"
+    ],
+    "final_actions": [
+      "retain",
+      "suppress",
+      "flag_review",
+      "pass_through_unchecked"
+    ],
+    "candidate_routing": [
+      "accept",
+      "review",
+      "reject"
+    ],
+    "checked_field_modes": {
+      "catalyst": "LITERAL_EVIDENCE_CHECK",
+      "ligand": "NORMALIZATION_AWARE_CHECK",
+      "substrate": "LITERAL_EVIDENCE_CHECK",
+      "product": "LITERAL_EVIDENCE_CHECK",
+      "h2_pressure": "FULL_EVIDENCE_CHECK",
+      "temperature": "FULL_EVIDENCE_CHECK",
+      "reaction_time": "FULL_EVIDENCE_CHECK",
+      "solvent": "LITERAL_EVIDENCE_CHECK",
+      "yield": "FULL_EVIDENCE_CHECK",
+      "ee_or_er": "FULL_EVIDENCE_CHECK",
+      "stereochemical_outcome": "EXPLICIT_STEREO_CHECK"
+    },
+    "unchecked_field_modes": {
+      "reaction": "NOT_CHECKED_V1"
+    },
+    "coverage_note": "Coverage is reported as verifier_coverage_rate over candidate x field units, not as a fields fraction.",
+    "status": "ACTIVE_IN_FORMAL_RUN"
+  },
+  "deferred_verifier": {
+    "version": "verifier-v1",
+    "module_path": "modules/verifier.py",
+    "git_blob_sha_on_old_freeze_branch": "7733e1f7697a35b9d72541cd591803edaa896350",
+    "kind": "llm",
+    "status": "DEFERRED_TO_V1_1"
+  },
+  "field_schema": {
+    "path": "benchmark/FIELD_SCHEMA_V1.json",
+    "version": "agent-v1-field-schema-v1",
+    "field_count": 12,
+    "aggregate_conditions_field": false,
+    "selectivity_option": "B",
+    "status": "FROZEN_CANDIDATE"
+  },
+  "scoring_contract": {
+    "path": "benchmark/SCORING_CONTRACT_V1.md",
+    "version": "scoring-contract-v1",
+    "scorer_implementation": "tools/score_agent_v1.py",
+    "status": "ACTIVE_IN_FORMAL_RUN",
+    "scorer_version": "agent-v1-scorer-v2",
+    "scorer_git_blob_sha": "eed69ac8786a0315089752aa3afb1bf320402697",
+    "accounts": [
+      "a_raw_extractor",
+      "b_verifier_checked_subset",
+      "c_unchecked_and_unverifiable",
+      "d_final_stream"
+    ],
+    "single_verified_accuracy_metric": false
+  },
+  "dependency_versions": {
+    "lock_file": "requirements-benchmark-lock.txt",
+    "python": "3.14.7 (local capture); CI matrix 3.10, 3.11, 3.12",
+    "pypdf": "6.19.0",
+    "pytest": "8.4.2",
+    "pandas": "3.0.6",
+    "numpy": "2.5.3",
+    "openpyxl": "3.1.5",
+    "PyYAML": "6.0.3",
+    "requests": "2.34.2",
+    "openai": "UNRESOLVED_BEFORE_FREEZE",
+    "pydantic": "not_installed_not_used",
+    "note": "The benchmark environment must pin one Python version before a live run; the CI matrix is not a benchmark environment."
+  },
+  "blind_binding": {
+    "prospective_blind_v3": "NOT_BOUND",
+    "note": "This manifest describes the developer-side system only. No blind identity, manifest or source was read while producing it."
+  },
+  "legacy_raw_llm_extractor": {
+    "version": "llm-extractor-v1",
+    "prompt_version": "llm-extractor-prompt-v1",
+    "module_path": "modules/llm_extractor.py",
+    "git_blob_sha": "b4aeff654824bd2d23f23b77920a9f8487917f27",
+    "byte_identical_to_old_freeze": true,
+    "field_count": 8,
+    "lineage_doc": "docs/LLM_EXTRACTOR_LINEAGE_V1_TO_V2.md",
+    "status": "LEGACY_NOT_USED"
+  },
+  "raw_prediction_freeze": {
+    "tool_path": "tools/freeze_raw_predictions.py",
+    "git_blob_sha": "cf4c8ffba92583ca08d726a57bce9093223ead16",
+    "freeze_version": "raw-prediction-freeze-v1",
+    "rule": "raw predictions are hashed before normalization, verification or scoring; any edit voids the run",
+    "status": "ACTIVE_IN_FORMAL_RUN"
+  },
+  "artifact_contracts_doc": "docs/AGENT_V1_ARTIFACT_CONTRACTS.md",
+  "chain_runner": {
+    "version": "agent-v1-chain-runner-v2",
+    "tool_path": "tools/run_chain.py",
+    "git_blob_sha": "e2402f080ec75c61098c7b41f0f1cbf333f7dfbe",
+    "artifacts": [
+      "normalized_predictions.jsonl",
+      "verified_predictions.jsonl",
+      "chain_manifest.json"
+    ],
+    "join_key": "candidate_id",
+    "status": "ACTIVE_IN_FORMAL_RUN"
+  },
+  "artifact_loader": {
+    "module_path": "modules/artifact_chain.py",
+    "git_blob_sha": "6de74bdd8a09e59028c9bae35dcde679dd80fcfb",
+    "checks": [
+      "raw file sha256",
+      "candidate id digest",
+      "field schema version",
+      "extractor version",
+      "prompt version",
+      "response schema version",
+      "no downstream state inside raw"
+    ],
+    "behaviour_on_mismatch": "fail closed",
+    "status": "ACTIVE_IN_FORMAL_RUN"
+  },
+  "engineering_benchmarks": {
+    "tools/run_trust_benchmark.py": {
+      "system_under_test": "rule-baseline-v1 (deterministic regex extractor)",
+      "former_label": "raw",
+      "current_label": "rule_baseline / rule_baseline_verified",
+      "note": "This tool never evaluated the Raw LLM. Historical report files keep their original labels and are not rewritten.",
+      "status": "DEVELOPMENT_ONLY"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "benchmark_version": "real-development-v1",
+  "benchmark_kind": "real-non-blind-development",
+  "gold_freeze_date": "2026-09-10",
+  "private_gold_case_count": 12,
+  "private_gold_field_slots": 96,
+  "private_gold_sha256": "990799475b89051a2013c77fbcbb3128b3af278817dd67ba008ee93109c25cc5",
+  "gold_values_published": false,
+  "scientific_performance_results_seen_at_freeze": false,
+  "overlap_gate_status": "PENDING_MANIFEST_CROSSCHECK",
+  "benchmark_execution_allowed": false,
+  "note": "This attestation records the hash of the populated local/private gold file. No populated gold values are committed to the public repository. Benchmark execution remains blocked until the normalization_blind_candidate_v1 paper-identity/DOI overlap check is completed."
+}

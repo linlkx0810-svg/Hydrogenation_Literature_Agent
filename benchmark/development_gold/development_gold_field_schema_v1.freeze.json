@@ -1,0 +1,25 @@
+{
+  "freeze_version": "development-gold-freeze-v1",
+  "artifact": "development_gold_field_schema_v1.jsonl",
+  "sha256": "6afd1fe3c480624477510d2ecc9aee68460d4c04116d9505b5156550bbb44a85",
+  "gold_version": "development-gold-field-schema-v1",
+  "field_schema_version": "agent-v1-field-schema-v1",
+  "frozen": false,
+  "status": "INCOMPLETE_NOT_FROZEN",
+  "lineage": "legacy Gold v1 (8 fields) + source adjudication -> development Gold FIELD_SCHEMA_V1",
+  "legacy_gold_v1_sha256": "990799475b89051a2013c77fbcbb3128b3af278817dd67ba008ee93109c25cc5",
+  "legacy_gold_v1_artifact_recovered": false,
+  "development_only": true,
+  "blind_eligible": false,
+  "integrity_rule": "This Gold is for development evaluation only. It is never a blind benchmark, and a slot marked needs_source_review or unresolved_reference is excluded from every accuracy denominator.",
+  "case_count": 12,
+  "field_slot_count": 144,
+  "candidate_ids_sha256": "6d07327c1c5210d227217bd16baf5753f7350687250c7d8d2b556b7995c6feac",
+  "state_counts": {
+    "needs_source_review": 88,
+    "not_reported": 11,
+    "answered": 45
+  },
+  "scored_slots": 56,
+  "excluded_slots": 88
+}
