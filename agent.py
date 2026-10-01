@@ -4,6 +4,9 @@ The CLI intentionally exposes deterministic, auditable operations that can run
 without API keys. Retrieval and PDF stages remain available through the existing
 pipeline scripts; this entry point gives reviewers a fast way to exercise the
 reaction-level agent and benchmark it.
+
+Reviewer-only and blind-gold inputs are blocked during ordinary development.
+Benchmark evaluation against such material requires explicit evaluation mode.
 """
 
 from __future__ import annotations
@@ -12,12 +15,13 @@ import argparse
 import json
 from pathlib import Path
 
+from modules.blind_integrity import assert_safe_input_path, assert_safe_output_path
 from modules.reaction_candidate_extraction import candidates_to_dicts, extract_reaction_candidates
 from tools.run_benchmark import evaluate, load_jsonl
 
 
 def command_extract_text(args: argparse.Namespace) -> int:
-    input_path = Path(args.input)
+    input_path = assert_safe_input_path(Path(args.input), evaluation_mode=False)
     text = input_path.read_text(encoding="utf-8")
     candidates = extract_reaction_candidates(text, context_sentences=args.context)
     payload = {
@@ -30,15 +34,18 @@ def command_extract_text(args: argparse.Namespace) -> int:
 
     rendered = json.dumps(payload, indent=2, ensure_ascii=False)
     if args.output:
-        Path(args.output).write_text(rendered + "\n", encoding="utf-8")
-        print(f"Wrote {len(candidates)} candidate(s) to {args.output}")
+        output_path = assert_safe_output_path(Path(args.output), purpose="model")
+        output_path.write_text(rendered + "\n", encoding="utf-8")
+        print(f"Wrote {len(candidates)} candidate(s) to {output_path}")
     else:
         print(rendered)
     return 0
 
 
 def command_benchmark(args: argparse.Namespace) -> int:
-    results = evaluate(load_jsonl(Path(args.dataset)))
+    results = evaluate(
+        load_jsonl(Path(args.dataset), evaluation_mode=args.evaluation_mode)
+    )
     print(json.dumps(results, indent=2))
     return 0
 
@@ -69,6 +76,14 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark_parser.add_argument(
         "--dataset", default="examples/benchmark_synthetic.jsonl",
         help="JSONL benchmark dataset",
+    )
+    benchmark_parser.add_argument(
+        "--evaluation-mode",
+        action="store_true",
+        help=(
+            "Explicitly authorise evaluation against reviewer-only/blind-gold "
+            "inputs. Never use this flag for extractor or prompt development."
+        ),
     )
     benchmark_parser.set_defaults(func=command_benchmark)
 

@@ -22,6 +22,8 @@ A separate benchmark should be frozen before rule or prompt tuning. Each benchma
 
 Do not tune extraction rules on the blind-test partition.
 
+The development environment should use only a blind manifest containing stable identifiers and source hashes. Reviewer-only gold must remain outside normal model-development inputs. The executable path guards and evaluation-mode rules are documented in `docs/blind_integrity.md`.
+
 ### 3. Recommended metrics
 
 For screening, report precision, recall and F1 for the inclusion decision. For structured extraction, report exact-match accuracy per field and coverage (fraction of gold fields for which the system returned a value). Chemical entities may additionally require a normalised-match metric.
@@ -39,9 +41,19 @@ Record at least the following failure classes:
 - substrate/product association error
 - ambiguity requiring human adjudication
 
+## Blind-integrity rule
+
+Ordinary extraction and prompt-development commands must not read reviewer-only, blind-gold, sealed-prediction or adjudicated files. Frozen blind evaluation requires explicit evaluation mode. Model predictions and production outputs must remain separate from reviewer/adjudication outputs.
+
+A blind manifest may expose identifiers and cryptographic source hashes, but not gold labels, expected values, predictions or adjudication decisions. See `examples/blind_manifest.example.json`.
+
 ## Scientific-use rule
 
 Outputs from the current rule-based Stage 5 extractor must be manually checked against source PDFs before they are used as scientific evidence, training labels, or quantitative review data.
+
+## Release gate
+
+Before a scientific benchmark or dataset release, complete the checklist in `docs/blind_integrity.md`. In particular, record the exact extractor/prompt/registry/verifier versions, confirm that blind evaluation occurred only after development was frozen, and keep post-blind fixes under a new version rather than retrospectively changing the original result.
 
 ## Benchmark publication policy
 

@@ -1,0 +1,38 @@
+schema_version: "1.0"
+
+zones:
+  development:
+    readable_during_model_development: true
+    may_contain_gold: false
+  blind_manifest:
+    readable_during_model_development: true
+    may_contain_gold: false
+    allowed_item_fields:
+      - item_id
+      - paper_id
+      - doi
+      - source_id
+      - source_sha256
+  reviewer_only:
+    readable_during_model_development: false
+    requires_evaluation_mode: true
+  adjudication:
+    readable_during_model_development: false
+    requires_evaluation_mode: true
+
+sensitive_path_markers:
+  - reviewer_only
+  - reviewer-only
+  - reviewer_gold
+  - reviewer-gold
+  - blind_gold
+  - blind-gold
+  - sealed_predictions
+  - sealed-predictions
+  - adjudicated
+  - gold_labels
+  - gold-labels
+
+output_policy:
+  model_and_production_must_not_target_sensitive_paths: true
+  adjudication_must_target_separate_sensitive_path: true
