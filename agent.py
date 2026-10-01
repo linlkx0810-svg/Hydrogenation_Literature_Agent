@@ -12,17 +12,19 @@ import argparse
 import json
 from pathlib import Path
 
-from modules.reaction_candidate_extraction import candidates_to_dicts, extract_reaction_candidates
+from modules.extraction_backends import get_backend
+from modules.reaction_candidate_extraction import candidates_to_dicts
 from tools.run_benchmark import evaluate, load_jsonl
 
 
 def command_extract_text(args: argparse.Namespace) -> int:
     input_path = Path(args.input)
     text = input_path.read_text(encoding="utf-8")
-    candidates = extract_reaction_candidates(text, context_sentences=args.context)
+    backend = get_backend(args.backend)
+    candidates = backend.extract(text, context_sentences=args.context)
     payload = {
         "agent": "Hydrogenation Literature Agent",
-        "extractor": "rule-baseline-v1",
+        "extractor": backend.name,
         "source": str(input_path),
         "candidate_count": len(candidates),
         "candidates": candidates_to_dicts(candidates),
@@ -59,6 +61,10 @@ def build_parser() -> argparse.ArgumentParser:
     extract_parser.add_argument(
         "--context", type=int, default=2,
         help="Number of neighboring sentences to include around result anchors",
+    )
+    extract_parser.add_argument(
+        "--backend", default="rule", choices=["rule"],
+        help="Extraction backend. The deterministic rule backend is the current built-in baseline.",
     )
     extract_parser.set_defaults(func=command_extract_text)
 
