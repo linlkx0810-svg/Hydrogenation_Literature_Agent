@@ -2,9 +2,10 @@
 
 Date: 2026-09-24. Role of Claude in this batch: `SOURCE_REVIEW_ASSISTANT`, not the reviewer.
 
-Every row below is a **proposal**. Nothing here has entered the formal Gold, and nothing will until
-`reviewer_decision` is filled in `human_review_batch_01.csv` and `tools/apply_human_gold_reviews.py` is run.
-High confidence is not human confirmation.
+These were originally **proposals**, not automatic human confirmations. All 19 now carry
+reviewer-approved decisions in `human_review_batch_01.csv` and were promoted using
+`tools/apply_human_gold_reviews.py`. The CSV and Gold are authoritative; historical
+proposal notes below preserve the original basis rather than rewriting history.
 
 Scope: the queue reason `VALUE_MUST_BE_READ_FROM_THE_FROZEN_TARGET_ANCHOR` only. Structure-only ligands,
 catalysts, substrates and products, and any configuration needing structure interpretation, are deliberately
@@ -141,18 +142,15 @@ Confidence: MEDIUM
 Why not HIGH: The hydrogenation of acetophenone is described as being run in basic isopropanol for this table. Base is an additive, not part of the solvent value.
 Decision: [ ] APPROVE  [ ] REJECT  [ ] MODIFY  [ ] UNRESOLVED
 
-## If this batch is approved
+## Observed state after 19 approvals
 
-- candidate binding exact: 2 -> 2
-- ambiguous: 2 -> 2
-- unrepresentable: 8 -> 8
+- Binding: 2 BOUND_EXACT, 2 AMBIGUOUS_BINDING, 8 UNREPRESENTABLE_V1.
+- DEV-007 is TARGET_NOT_REPRESENTABLE_BY_CURRENT_BUILDER, not a table-default inference.
+- Table 2 entry 7 itself supports 25 atm H2 and 50 C; Scheme 3 and the
+  Table 2 preamble support isopropanol. The row's 4% conversion is not a yield.
+- Batch 02 proposes the remaining time and ee values for human review.
 
-One case would move to `BOUND_EXACT`. One case would move from `AMBIGUOUS_BINDING` to
-`UNREPRESENTABLE_V1`: with more adjudicated values it becomes provable that no candidate chunk reproduces a
-target whose conditions live in a table footnote. That is a real evidence-builder limitation surfacing, not a
-regression in the Gold.
-
-## How to record decisions
+## How the recorded decisions are replayed
 
 1. fill `reviewer_decision` in `benchmark/development_gold/human_review_batch_01.csv`
 2. for `MODIFY`, also fill `reviewer_value`, `reviewer_state` and `reviewer_note`

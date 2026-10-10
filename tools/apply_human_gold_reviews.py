@@ -18,8 +18,8 @@ readable in both forms.
 - blank         -> nothing changes; the slot stays open
 
 A row whose decision is empty can never promote, and the tool refuses to run if
-a decision column contains anything outside the four verbs. Claude never fills
-that column: a test asserts the committed batch ships with every decision blank.
+a decision column contains anything outside the four verbs. Proposals begin
+blank; recorded human decisions can be committed and replayed deterministically.
 """
 from __future__ import annotations
 

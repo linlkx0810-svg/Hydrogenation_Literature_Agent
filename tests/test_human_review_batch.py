@@ -1,4 +1,4 @@
-"""Human review batch 01, after the reviewer's decisions were recorded.
+"""Batch 01 is closed with 19 decisions; Batch 02 is proposal-only.
 
 Claude proposed; the human reviewer decided; `tools/apply_human_gold_reviews.py`
 applied exactly those decisions. These tests pin that chain: what promoted, what
@@ -6,6 +6,7 @@ stayed open, and that nothing else moved.
 """
 import csv
 import json
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -15,6 +16,7 @@ from tools.apply_human_gold_reviews import PromotionError, promote
 ROOT = Path(__file__).resolve().parents[1]
 GOLD_DIR = ROOT / "benchmark/development_gold"
 BATCH = GOLD_DIR / "human_review_batch_01.csv"
+BATCH_02 = GOLD_DIR / "human_review_batch_02.csv"
 GOLD_PATH = GOLD_DIR / "development_gold_field_schema_v1.jsonl"
 STRUCTURE_ONLY_FIELDS = {"catalyst", "product", "stereochemical_outcome"}
 DECISIONS = {"APPROVE", "REJECT", "MODIFY", "UNRESOLVED", ""}
@@ -34,6 +36,7 @@ def _gold():
 
 
 BATCH_ROWS = _rows(BATCH)
+BATCH_02_ROWS = _rows(BATCH_02)
 GOLD = {record["gold_case_id"]: record for record in _gold()}
 APPROVED = [r for r in BATCH_ROWS if r["reviewer_decision"] == "APPROVE"]
 PENDING = [r for r in BATCH_ROWS if not r["reviewer_decision"].strip()]
@@ -45,6 +48,8 @@ def test_decisions_come_from_the_fixed_vocabulary():
     assert len(APPROVED) + len(PENDING) + len(
         [r for r in BATCH_ROWS if r["reviewer_decision"] in {"REJECT", "MODIFY", "UNRESOLVED"}]
     ) == len(BATCH_ROWS)
+    assert len(BATCH_ROWS) == 19
+    assert [r["review_id"] for r in BATCH_ROWS] == [f"B01-{n:03d}" for n in range(1, 20)]
     assert len(APPROVED) == 19, "batch 01 is closed: every row carries a decision"
     assert len(PENDING) == 0
 
@@ -81,6 +86,52 @@ def test_dev007_conditions_come_from_the_entry_row_not_a_table_default():
     assert solvent["reported_value"] == "basic isopropanol"
     assert "Scheme 3" in solvent["source_locator"]
     assert "KOtBu is separately represented as the base" in solvent["reviewer_note"]
+
+
+
+
+def test_batch_02_entry7_proposals_are_not_human_decisions():
+    assert len(BATCH_02_ROWS) == 2
+    assert {r["review_id"] for r in BATCH_02_ROWS} == {"B02-001", "B02-002"}
+    assert {(r["field"], r["proposed_value"], r["unit"]) for r in BATCH_02_ROWS} == {
+        ("reaction_time", "18", "hour"),
+        ("ee_or_er", "61", "percent_ee"),
+    }
+    for row in BATCH_02_ROWS:
+        assert (row["case_id"], row["paper_id"]) == ("DEV-007", "FE-H2-AH-0006")
+        assert row["table_or_scheme"] == "Table 2 entry 7"
+        assert row["target_anchor_match"] == "EXACT_TABLE_ROW"
+        assert row["reviewer_decision"] == ""
+        assert row["reviewer_note"] == ""
+        field = GOLD["DEV-007"]["fields"][row["field"]]
+        assert field["state"] == "needs_source_review"
+        assert field.get("review_id") is None
+        assert field.get("review_status") != "HUMAN_CONFIRMED"
+    assert GOLD["DEV-007"]["fields"]["yield"]["state"] == "not_reported"
+
+
+def test_batch_01_preview_reports_actual_promoted_binding_not_a_what_if():
+    preview = json.loads((GOLD_DIR / "binding_preview_batch_01.json").read_text(encoding="utf-8"))
+    actual = dict(Counter(row["binding_status"] for row in _rows(GOLD_DIR / "candidate_binding_v1.csv")))
+    assert preview["hypothetical"] is False
+    assert preview["scope"] == "POST_PROMOTION_ACTUAL"
+    assert preview["decisions_recorded"] == len(APPROVED) == 19
+    assert preview["pending_decisions"] == 0
+    assert preview["current"] == actual == preview["projected"]
+    assert preview["changed_cases"] == []
+
+
+def test_batch_02_status_is_pending_and_gold_remains_unchanged():
+    status = json.loads((GOLD_DIR / "HUMAN_REVIEW_STATUS_V1.json").read_text(encoding="utf-8"))
+    assert status["batch_01_closed"] is True
+    assert status["approved"] == 19 and status["left_pending"] == 0
+    assert status["batch_02_status"] == "AWAITING_HUMAN_DECISION"
+    assert status["batch_02_count"] == 2
+    assert status["batch_02_decisions_recorded"] == 0
+    assert status["batch_02_pending_review_ids"] == ["B02-001", "B02-002"]
+    assert status["batch_02_promotion_done"] is False
+    assert status["total_open"] == 88
+    assert status["gold_after_promotion"]["human_confirmed"] == 19
 
 
 def test_a_converted_pressure_keeps_the_source_value_and_unit():

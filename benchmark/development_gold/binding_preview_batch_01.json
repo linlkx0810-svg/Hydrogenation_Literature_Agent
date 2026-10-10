@@ -1,7 +1,7 @@
 {
   "preview_version": "binding-preview-batch-01-v1",
-  "hypothetical": true,
-  "note": "This is what binding would become if every Batch 01 proposal were approved. No formal artifact was modified.",
+  "hypothetical": false,
+  "note": "Batch 01 has 19 recorded APPROVE decisions already promoted to Gold. Current binding is the audited post-promotion state; this is not an outstanding what-if.",
   "current": {
     "AMBIGUOUS_BINDING": 2,
     "UNREPRESENTABLE_V1": 8,
@@ -15,5 +15,8 @@
   "changed_cases": [],
   "projected_exact": 2,
   "projected_ambiguous": 2,
-  "projected_unrepresentable": 8
+  "projected_unrepresentable": 8,
+  "decisions_recorded": 19,
+  "pending_decisions": 0,
+  "scope": "POST_PROMOTION_ACTUAL"
 }

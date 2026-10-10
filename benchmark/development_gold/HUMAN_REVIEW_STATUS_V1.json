@@ -67,5 +67,30 @@
     "INSUFFICIENT_ADJUDICATED_VALUES": 7,
     "TARGET_NOT_REPRESENTABLE_BY_CURRENT_BUILDER": 2,
     "MULTIPLE_CANDIDATES_AMBIGUOUS": 1
-  }
+  },
+  "batch_02_prepared_on": "2026-10-10",
+  "batch_02_status": "AWAITING_HUMAN_DECISION",
+  "batch_02_count": 2,
+  "batch_02_cases": [
+    "DEV-007"
+  ],
+  "batch_02_fields": [
+    "reaction_time",
+    "ee_or_er"
+  ],
+  "batch_02_source_evidence": "MAIN, Table 2 entry 7 (PDF p. 5; journal p. 739)",
+  "batch_02_decisions_prefilled": false,
+  "batch_02_decisions_recorded": 0,
+  "batch_02_pending_review_ids": [
+    "B02-001",
+    "B02-002"
+  ],
+  "batch_02_gold_projection_if_both_approved": {
+    "answered": 47,
+    "not_reported": 11,
+    "needs_source_review": 86,
+    "scored_slots": 58,
+    "human_confirmed": 21
+  },
+  "batch_02_promotion_done": false
 }

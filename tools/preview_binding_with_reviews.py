@@ -1,9 +1,8 @@
-"""Project what candidate binding would become if Batch 01 were approved.
+"""Preview human review binding without conflating proposals and promoted decisions.
 
-Read-only with respect to the formal artifacts: it never writes the Gold and
-never writes `candidate_binding_v1.csv`. It answers one question — is this
-review batch worth a reviewer's time — and writes only
-`binding_preview_batch_01.json`.
+A fully promoted Batch 01 is a snapshot of the existing audited candidate
+binding, not a hypothetical. Pending batches may be projected in memory
+with extracted source text, but this never changes Gold or binding CSV.
 """
 from __future__ import annotations
 
@@ -41,12 +40,28 @@ def _apply_proposals(gold_records: list[dict], reviews: list[dict]) -> list[dict
     return projected
 
 
+def _all_approved_and_promoted(gold_records: list[dict], reviews: list[dict]) -> bool:
+    """Only a batch with all APPROVE decisions replayed into Gold is realized."""
+    index = {record["gold_case_id"]: record for record in gold_records}
+    if not reviews:
+        return False
+    for row in reviews:
+        if (row.get("reviewer_decision") or "").strip().upper() != "APPROVE":
+            return False
+        field = index.get(row["case_id"], {}).get("fields", {}).get(row["field"], {})
+        if (field.get("review_id") != row["review_id"]
+                or field.get("review_decision") != "APPROVE"
+                or field.get("state") != row.get("proposed_state")):
+            return False
+    return True
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gold", required=True)
     parser.add_argument("--reviews", required=True)
     parser.add_argument("--binding", required=True, help="current binding audit CSV")
-    parser.add_argument("--source-dir", required=True)
+    parser.add_argument("--source-dir", help="required for unpromoted what-if previews")
     parser.add_argument(
         "--out",
         default=str(PROJECT_ROOT / "benchmark/development_gold/binding_preview_batch_01.json"),
@@ -63,7 +78,14 @@ def main() -> int:
     with open(args.binding, newline="", encoding="utf-8-sig") as handle:
         current = list(csv.DictReader(handle))
 
-    projected_rows = audit(_apply_proposals(gold, reviews), Path(args.source_dir))
+    promoted = _all_approved_and_promoted(gold, reviews)
+    if promoted:
+        # This is an audited post-promotion snapshot, not a fresh audit.
+        projected_rows = current
+    else:
+        if not args.source_dir:
+            parser.error("--source-dir is required for an unpromoted preview")
+        projected_rows = audit(_apply_proposals(gold, reviews), Path(args.source_dir))
     current_counts = Counter(row["binding_status"] for row in current)
     projected_counts = Counter(row["binding_status"] for row in projected_rows)
 
@@ -81,16 +103,24 @@ def main() -> int:
                 }
             )
 
+    decisions_recorded = sum(bool((row.get("reviewer_decision") or "").strip()) for row in reviews)
     preview = {
         "preview_version": PREVIEW_VERSION,
-        "hypothetical": True,
-        "note": "This is what binding would become if every Batch 01 proposal were approved. No formal artifact was modified.",
+        "hypothetical": not promoted,
+        "note": (
+            "Batch 01 has 19 recorded APPROVE decisions already promoted to Gold. Current binding is the audited post-promotion state; this is not an outstanding what-if."
+            if promoted else
+            "In-memory proposal projection only; no formal artifact was modified."
+        ),
         "current": dict(current_counts),
         "projected": dict(projected_counts),
         "changed_cases": changed,
         "projected_exact": projected_counts.get("BOUND_EXACT", 0),
         "projected_ambiguous": projected_counts.get("AMBIGUOUS_BINDING", 0),
         "projected_unrepresentable": projected_counts.get("UNREPRESENTABLE_V1", 0),
+        "decisions_recorded": decisions_recorded,
+        "pending_decisions": len(reviews) - decisions_recorded,
+        "scope": "POST_PROMOTION_ACTUAL" if promoted else "UNPROMOTED_WHAT_IF",
     }
     with open(args.out, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(json.dumps(preview, indent=2) + "\n")
