@@ -1,7 +1,7 @@
 {
   "freeze_version": "development-gold-freeze-v1",
   "artifact": "development_gold_field_schema_v1.jsonl",
-  "sha256": "6afd1fe3c480624477510d2ecc9aee68460d4c04116d9505b5156550bbb44a85",
+  "sha256": "3ac9ba4db31d92f1a4529d42a1de22042edaadc23b41ee38289c33683e269c67",
   "gold_version": "development-gold-field-schema-v1",
   "field_schema_version": "agent-v1-field-schema-v1",
   "frozen": false,

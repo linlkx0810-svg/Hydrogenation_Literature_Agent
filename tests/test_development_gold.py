@@ -97,8 +97,23 @@ def test_ee_migrates_typed_without_conversion_or_configuration_inference():
         ee = record["fields"]["ee_or_er"]
         if ee["state"] == "answered":
             assert isinstance(ee["value"], dict)
-            assert ee["value"]["kind"] in {"ee_percent", "er_ratio"}
-            assert isinstance(ee["value"]["value"], (int, float))
+            kind = ee["value"]["kind"]
+            assert kind in {"ee_percent", "er_ratio"}
+            if kind == "ee_percent":
+                assert isinstance(ee["value"]["value"], (int, float))
+            else:
+                # An er keeps both terms of the ratio; collapsing it into one
+                # number would be the conversion this contract forbids.
+                assert isinstance(ee["value"]["major"], (int, float))
+                assert isinstance(ee["value"]["minor"], (int, float))
+                assert "value" not in ee["value"]
+            # The stored kind must be the kind the source printed. This is what
+            # stops a reported er from being recorded as a derived ee.
+            reported = (ee.get("reported_value") or "").lower()
+            if reported:
+                assert (":" in reported) == (kind == "er_ratio"), (
+                    f"{record['gold_case_id']}: reported {reported!r} stored as {kind}"
+                )
         stereo = record["fields"]["stereochemical_outcome"]
         if stereo["state"] == "answered":
             assert stereo.get("provenance") not in {"LEGACY_GOLD_TYPED_MIGRATION"}, (

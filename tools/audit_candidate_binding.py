@@ -54,8 +54,15 @@ CANDIDATE_ATTR = {
 }
 
 
-def _pin_values(record: dict) -> dict:
+def _pin_values(record: dict) -> tuple[dict, list[str]]:
+    """Gold values usable as a pin, plus the adjudicated ones the builder cannot use.
+
+    An er is adjudicated Gold, but the rule-based candidate builder only captures
+    an ee, so there is nothing to compare it against. It is reported as a builder
+    gap rather than silently converted into an ee or counted as a missing value.
+    """
     out = {}
+    unusable = []
     for name in PIN_FIELDS:
         field = record["fields"].get(name, {})
         if field.get("state") != "answered":
@@ -63,10 +70,11 @@ def _pin_values(record: dict) -> dict:
         value = field.get("value")
         if isinstance(value, dict):
             if value.get("kind") != "ee_percent":
-                continue  # an er ratio is not comparable to the builder's ee capture
+                unusable.append(f"{name} ({value.get('kind')})")
+                continue
             value = value.get("value")
         out[name] = value
-    return out
+    return out, unusable
 
 
 def _match_count(candidate, values: dict) -> int:
@@ -99,7 +107,13 @@ def audit(gold_records: list[dict], source_dir: Path) -> list[dict]:
         case = record["gold_case_id"]
         paper_id = record["paper_id"]
         anchor = record.get("legacy_target_anchor", "")
-        values = _pin_values(record)
+        values, unusable = _pin_values(record)
+        unusable_note = (
+            f" {len(unusable)} adjudicated value(s) the current builder cannot capture: "
+            f"{', '.join(unusable)}."
+            if unusable
+            else ""
+        )
         artifacts = _artifacts(source_dir, paper_id)
 
         if not artifacts:
@@ -120,14 +134,21 @@ def audit(gold_records: list[dict], source_dir: Path) -> list[dict]:
                     best.append((role, candidate, hits))
 
         if not values:
+            cause = (
+                "TARGET_NOT_REPRESENTABLE_BY_CURRENT_BUILDER"
+                if unusable
+                else "INSUFFICIENT_ADJUDICATED_VALUES"
+            )
             rows.append(_row(case, paper_id, anchor, "", "", "UNREPRESENTABLE_V1",
-                             "gold_value_pin", "INSUFFICIENT_ADJUDICATED_VALUES",
-                             f"No adjudicated numeric Gold value yet; {total_candidates} candidates exist."))
+                             "gold_value_pin", cause,
+                             f"No usable adjudicated Gold value; {total_candidates} candidates exist."
+                             + unusable_note))
             continue
         if len(values) < 2:
             rows.append(_row(case, paper_id, anchor, "", "", "AMBIGUOUS_BINDING",
                              "gold_value_pin", "INSUFFICIENT_ADJUDICATED_VALUES",
-                             f"Only {len(values)} adjudicated value(s); a single value cannot pin a chunk uniquely."))
+                             f"Only {len(values)} adjudicated value(s); a single value cannot pin a chunk uniquely."
+                             + unusable_note))
             continue
 
         best.sort(key=lambda item: -item[2])

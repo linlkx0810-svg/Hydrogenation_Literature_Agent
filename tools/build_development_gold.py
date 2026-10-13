@@ -14,8 +14,12 @@ Rules enforced here:
 - `answered` requires a value, a provenance, a source locator and an evidence
   type; `not_reported` must carry a review status proving it was looked for;
 - `substrate_class` is never copied into `substrate`;
-- a legacy ee migrates as `{kind, value}` and is never converted to an er, and
-  no configuration is ever derived from it;
+- enantioselectivity keeps the kind the source printed: an ee migrates as
+  `{kind: ee_percent, value}` and an er as `{kind: er_ratio, major, minor}`.
+  Neither is ever converted into the other, and no configuration is derived
+  from either;
+- an answered unit-bearing field must name its unit, so a bare number can never
+  stand in for a measurement;
 - anything the legacy record and the adjudication table do not establish stays
   `needs_source_review` and is excluded from every scoring denominator.
 """
@@ -35,6 +39,9 @@ FIELD_SCHEMA_VERSION = "agent-v1-field-schema-v1"
 
 GOLD_STATES = ("answered", "not_reported", "not_applicable", "unresolved_reference", "needs_source_review")
 SCORED_STATES = ("answered", "not_reported", "not_applicable")
+UNIT_BEARING_FIELDS = frozenset(
+    {"h2_pressure", "temperature", "reaction_time", "yield", "ee_or_er"}
+)
 FORBIDDEN_PROVENANCE = {
     "AGENT_PREDICTION",
     "LLM_EXTRACTOR",
@@ -75,6 +82,14 @@ def _typed_value(row: dict):
     kind = (row.get("value_kind") or "").strip()
     if not value:
         return None
+    if kind == "er_ratio":
+        # An er stays an er: `major:minor` keeps both terms of the ratio the
+        # source printed. Collapsing it into a single ee number would record a
+        # value the paper never states.
+        major, sep, minor = value.partition(":")
+        if not sep:
+            raise GoldBuildError(f"er_ratio value must be written major:minor, got {value!r}")
+        return {"kind": kind, "major": float(major), "minor": float(minor)}
     if kind:
         return {"kind": kind, "value": float(value)}
     try:
@@ -98,7 +113,9 @@ def _apply(field_record: dict, row: dict, field: str) -> dict:
         {
             "state": state,
             "value": _typed_value(row) if state == "answered" else None,
+            "unit": (row.get("unit") or "").strip() or None,
             "reported_value": (row.get("reported_value") or "").strip() or None,
+            "reported_unit": (row.get("reported_unit") or "").strip() or None,
             "canonical_value": (row.get("canonical_value") or "").strip() or None,
             "provenance": provenance,
             "source_role": (row.get("source_role") or "").strip() or None,
@@ -116,6 +133,10 @@ def _apply(field_record: dict, row: dict, field: str) -> dict:
         for key in ("source_locator", "evidence_type", "provenance"):
             if not merged[key]:
                 raise GoldBuildError(f"{field}: answered gold without {key}")
+        # A bare number is not an answer. Without a unit, 50 bar and 50 atm are
+        # the same Gold value, so a unit-bearing field must name its unit.
+        if field in UNIT_BEARING_FIELDS and not merged["unit"]:
+            raise GoldBuildError(f"{field}: answered gold without a unit")
     if state == "not_reported" and merged["value"] is not None:
         raise GoldBuildError(f"{field}: not_reported gold must not carry a value")
     if state == "not_reported" and merged["review_status"] != "SOURCE_REVIEWED_NOT_REPORTED":

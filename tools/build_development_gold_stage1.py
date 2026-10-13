@@ -102,8 +102,9 @@ def build() -> list[dict]:
                 "legacy_field": legacy_field,
                 "review_status": "NEEDS_SOURCE_REVIEW" if answered else "SOURCE_REVIEWED_NOT_REPORTED",
                 "typed_migration_rule": (
-                    "A legacy ee_percent becomes {kind: ee_percent, value: n}. No ee-to-er "
-                    "conversion, and no configuration is inferred from an ee."
+                    "A legacy ee_percent becomes {kind: ee_percent, value: n}. The reported "
+                    "kind is never converted in either direction, and no configuration is "
+                    "inferred from an enantioselectivity value."
                 ),
             }
 

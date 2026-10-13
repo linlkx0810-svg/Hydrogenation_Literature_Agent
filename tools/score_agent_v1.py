@@ -60,9 +60,16 @@ def _gold_entry(raw) -> tuple[object, str]:
 
 def _equal(prediction, gold) -> bool:
     if isinstance(prediction, dict) and isinstance(gold, dict):
-        return prediction.get("kind") == gold.get("kind") and _equal(
-            prediction.get("value"), gold.get("value")
-        )
+        if prediction.get("kind") != gold.get("kind"):
+            return False
+        if gold.get("kind") == "er_ratio":
+            # An er carries its value in `major`/`minor`, not in `value`.
+            # Comparing `value` here would read None on both sides and call
+            # every er equal to every other er.
+            return all(
+                _equal(prediction.get(term), gold.get(term)) for term in ("major", "minor")
+            ) and prediction.get("major") is not None
+        return _equal(prediction.get("value"), gold.get("value"))
     if isinstance(prediction, (int, float)) and isinstance(gold, (int, float)):
         return math.isclose(float(prediction), float(gold), rel_tol=0.0, abs_tol=NUMERIC_TOLERANCE)
     if isinstance(prediction, str) and isinstance(gold, str):

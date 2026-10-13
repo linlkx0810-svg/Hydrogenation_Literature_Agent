@@ -107,7 +107,7 @@
       "type": "numeric_with_kind",
       "definition": "Enantioselectivity as reported: either ee in percent or er as a ratio.",
       "unit": "percent_ee_or_ratio_er",
-      "canonicalization": "the reported kind is preserved; er is converted to ee only when the ratio is explicit and unambiguous; tolerance abs 1e-4 after conversion",
+      "canonicalization": "the reported kind is preserved and never converted: an ee stays {kind: ee_percent, value} and an er stays {kind: er_ratio, major, minor}. A comparison matches only within the same kind; numeric tolerance abs 1e-4",
       "evidence_requirement": "value present in the bound evidence window",
       "scored": true
     },
@@ -143,6 +143,13 @@
       "change": "the reaction field now cites REACTION_TAXONOMY_V1 as its controlled vocabulary",
       "field_set_changed": false,
       "closes": "SCHEMA_DEFINITION_GAP(reaction)"
+    },
+    {
+      "amendment": 2,
+      "date": "2026-10-10",
+      "change": "ee_or_er canonicalization no longer permits er-to-ee conversion. The clause previously said both that the reported kind is preserved and that an er is converted to an ee; nothing in the pipeline implemented the conversion, while the Gold held converted values, so a faithful extraction scored incorrect.",
+      "field_set_changed": false,
+      "closes": "SCHEMA_CONTRADICTION(ee_or_er.canonicalization)"
     }
   ]
 }
