@@ -124,4 +124,6 @@ This changed two bindings, both for the better.
 
 One consequence worth recording: `candidate_id` is positional (`rxn-NNNN`), so adding an anchor renumbers later candidates. The stable identifier is `source_chunk_id`, which carries the artifact and the character span.
 
-A known gap is pinned by an `xfail` in `tests/test_reaction_candidate_extraction.py`: the sentence splitter reads the period in `e.r.` as a sentence end, so a window opening with the abbreviation is cut before its ratio. Value-first forms, which is how this literature overwhelmingly writes it, are unaffected.
+The sentence splitter used to read the period in `e.r.` as a sentence end, so a window opening with the abbreviation was cut before its ratio. It now refuses a boundary where the period only closes an abbreviation, recognised as two or more dotted letters (`e.r.`, `e.e.`, `d.r.`, `i.e.`, `m.p.`). A single capital before the period, as in `at 25 C.`, is a unit and still ends its sentence, and an abbreviation followed by a sentence period (`65:35 e.r..`) leaves a bare dot last, so that boundary splits too.
+
+Sentence offsets are now cut from the boundaries themselves instead of by searching the article for the sentence text, so a sentence repeated verbatim no longer collapses onto its first occurrence. Across the 18 corpus artifacts the change moves no binding row and leaves both synthetic benchmarks unchanged.

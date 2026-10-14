@@ -1,6 +1,7 @@
 import pytest
 
 from modules.reaction_candidate_extraction import (
+    _sentence_spans,
     extract_reaction_candidates,
     pressure_to_bar,
 )
@@ -83,16 +84,35 @@ def test_er_is_read_in_either_word_order():
         assert (candidates[0].er_major, candidates[0].er_minor) == expected, text
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="the sentence splitter reads the period in `e.r.` as a sentence end, so "
-    "a window opening with the abbreviation is cut before its ratio. The regex "
-    "reads it; anchoring never sees it. Value-first forms, which is how this "
-    "literature overwhelmingly writes it, are unaffected.",
-)
-def test_abbreviated_marker_before_the_ratio_is_a_known_gap():
+def test_an_abbreviation_period_does_not_end_a_sentence():
+    """`e.r.` used to be cut from its own ratio by the sentence splitter."""
     candidates = extract_reaction_candidates("e.r. = 95:5 was measured")
     assert candidates and (candidates[0].er_major, candidates[0].er_minor) == (95.0, 5.0)
+
+
+def test_sentence_splitting_still_ends_a_real_sentence():
+    """The abbreviation rule must not glue ordinary sentences together."""
+    for text, expected in (
+        # a single capital before the period is a unit, not an abbreviation
+        ("The reaction ran at 25 C. The product was isolated in 88% yield.", 2),
+        ("Purified by chiral GC. The e.r. was 95:5.", 2),
+        ("Solvent was THF. Yield was 90%.", 2),
+        # an abbreviation followed by a sentence period leaves a bare dot last
+        ("2r: >99% GC yield, 65:35 e.r.. Next sentence here.", 2),
+        # a mid-sentence abbreviation keeps its sentence whole
+        ("the m.p. = 120 C was recorded", 1),
+        ("Several solvents, e.g. THF, were tried. It worked.", 2),
+    ):
+        assert len(_sentence_spans(text)) == expected, text
+
+
+def test_sentence_spans_report_exact_offsets():
+    """Spans are cut from the boundaries, so a repeated sentence keeps its place."""
+    text = "The yield was 90%. The yield was 90%. A third sentence."
+    spans = _sentence_spans(text)
+    assert len(spans) == 3
+    assert [text[start:end] for start, end, _ in spans] == [part for _, _, part in spans]
+    assert spans[0][0] == 0 and spans[1][0] == 19
 
 
 def test_an_unlabelled_ratio_is_never_read_as_a_selectivity():

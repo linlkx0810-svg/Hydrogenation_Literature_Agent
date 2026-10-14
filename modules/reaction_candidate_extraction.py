@@ -67,6 +67,12 @@ SUBSTRATE_RE = re.compile(
 )
 
 SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+|\n+")
+# A period closing an abbreviation is not a sentence end. Two or more dotted
+# letters cover the forms this literature uses -- e.r., e.e., d.r., i.e., e.g.,
+# m.p. -- while a sentence genuinely ending in a single capital, such as
+# "at 25 C.", still splits. A sentence period after the abbreviation ("65:35
+# e.r..") leaves a bare dot last, so that boundary still splits too.
+ABBREVIATION_END_RE = re.compile(r"(?:[A-Za-z]\.){2,}$")
 
 
 @dataclass
@@ -153,18 +159,29 @@ def _extract_pressure_bar(text: str) -> float | None:
 
 
 def _sentence_spans(text: str) -> list[tuple[int, int, str]]:
+    """Split into sentences, refusing a boundary that only closes an abbreviation.
+
+    Offsets are computed from the boundaries themselves rather than by searching
+    for the text, so a sentence repeated verbatim in an article still gets its
+    own span.
+    """
+    segments: list[tuple[int, int]] = []
+    segment_start = 0
+    for match in SENTENCE_SPLIT_RE.finditer(text):
+        if ABBREVIATION_END_RE.search(text[segment_start:match.start()].rstrip()):
+            continue
+        segments.append((segment_start, match.start()))
+        segment_start = match.end()
+    segments.append((segment_start, len(text)))
+
     spans: list[tuple[int, int, str]] = []
-    cursor = 0
-    for part in SENTENCE_SPLIT_RE.split(text):
-        part = part.strip()
+    for start, end in segments:
+        raw = text[start:end]
+        part = raw.strip()
         if not part:
             continue
-        start = text.find(part, cursor)
-        if start < 0:
-            start = cursor
-        end = start + len(part)
-        spans.append((start, end, part))
-        cursor = end
+        offset = start + (len(raw) - len(raw.lstrip()))
+        spans.append((offset, offset + len(part), part))
     return spans
 
 
