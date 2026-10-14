@@ -1,0 +1,11 @@
+# Hashed artifacts must be byte-identical on every platform.
+* text=auto eol=lf
+*.jsonl text eol=lf
+*.json text eol=lf
+*.csv text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+*.pdf binary
+*.xlsx binary

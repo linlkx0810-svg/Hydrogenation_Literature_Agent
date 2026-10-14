@@ -8,6 +8,11 @@ to support each field.
 The implementation is intentionally deterministic and model-free. It provides a
 stable baseline that can later be compared with an LLM extractor using the same
 output schema.
+
+Enantioselectivity is captured in whichever form the source reports: an ee in
+`ee_percent`, an enantiomer ratio in `er_major`/`er_minor`. The two are never
+converted into one another, so a paper reporting `65:35 e.r.` yields a ratio and
+not a derived 30% ee.
 """
 
 from __future__ import annotations
@@ -18,6 +23,16 @@ from typing import Iterable
 
 EE_RE = re.compile(r"(?P<value>\d{1,3}(?:\.\d+)?)\s*%\s*ee", re.I)
 YIELD_RE = re.compile(r"(?P<value>\d{1,3}(?:\.\d+)?)\s*%\s*yield", re.I)
+# An enantiomer ratio is read only where the source labels it one. A bare
+# `d:d` is far too common in this literature -- solvent ratios, eluent
+# gradients, S:C:B loadings -- to be taken for a selectivity on its own.
+_ER_MARK = r"(?:e\.?\s*r\.?|enantiomer(?:ic)?\s+ratios?)"
+ER_RE = re.compile(
+    r"(?P<major>\d{1,3}(?:\.\d+)?)\s*[:/]\s*(?P<minor>\d{1,3}(?:\.\d+)?)\s*" + _ER_MARK
+    + r"|" + _ER_MARK + r"\s*(?:of\s+|[=:]\s*)?[(\[]?\s*"
+    r"(?P<major2>\d{1,3}(?:\.\d+)?)\s*[:/]\s*(?P<minor2>\d{1,3}(?:\.\d+)?)",
+    re.I,
+)
 PRESSURE_RE = re.compile(
     r"(?P<value>\d{1,4}(?:\.\d+)?)\s*(?P<unit>bar|atm|psi|MPa|kPa)\b",
     re.I,
@@ -39,6 +54,11 @@ LIGANDS = (
     "DPPP", "DPPM", "Triphos",
 )
 LIGAND_RE = re.compile(r"\b(?:" + "|".join(map(re.escape, LIGANDS)) + r")\b", re.I)
+LIGAND_ALIAS_RE = re.compile(
+    r"\b(?:ligand|using|with|bearing|containing)\s+"
+    r"(?P<alias>L\d+[A-Za-z*′'\-]*)\b",
+    re.I,
+)
 
 SUBSTRATE_RE = re.compile(
     r"\b(?:aryl ketone|ketone|imine|alkene|olefin|aldehyde|ester|amide|"
@@ -47,6 +67,12 @@ SUBSTRATE_RE = re.compile(
 )
 
 SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+|\n+")
+# A period closing an abbreviation is not a sentence end. Two or more dotted
+# letters cover the forms this literature uses -- e.r., e.e., d.r., i.e., e.g.,
+# m.p. -- while a sentence genuinely ending in a single capital, such as
+# "at 25 C.", still splits. A sentence period after the abbreviation ("65:35
+# e.r..") leaves a bare dot last, so that boundary still splits too.
+ABBREVIATION_END_RE = re.compile(r"(?:[A-Za-z]\.){2,}$")
 
 
 @dataclass
@@ -64,6 +90,10 @@ class ReactionCandidate:
     evidence_text: str
     evidence_start: int
     evidence_end: int
+    # An enantiomer ratio is kept as the two terms the source prints. A producer
+    # that reports an ee leaves these unset; the two forms are never merged.
+    er_major: float | None = None
+    er_minor: float | None = None
     extraction_method: str = "rule-baseline-v1"
 
     def to_dict(self) -> dict:
@@ -79,6 +109,35 @@ def _first_text(pattern: re.Pattern, text: str) -> str | None:
     match = pattern.search(text)
     return match.group(0) if match else None
 
+
+def _first_er(text: str) -> tuple[float, float] | None:
+    """Return the first labelled enantiomer ratio as (major, minor).
+
+    The ratio is kept as two terms. Converting it to an ee here would record a
+    number the source does not state, which is the conversion the field schema
+    forbids.
+    """
+    match = ER_RE.search(text)
+    if not match:
+        return None
+    major = match.group("major") or match.group("major2")
+    minor = match.group("minor") or match.group("minor2")
+    if major is None or minor is None:
+        return None
+    major, minor = float(major), float(minor)
+    if not (0 <= minor <= major <= 100):
+        return None
+    return major, minor
+
+
+
+def _first_ligand_mention(text: str) -> str | None:
+    """Return an explicit ligand name or a context-qualified paper-local alias."""
+    named = LIGAND_RE.search(text)
+    if named:
+        return named.group(0)
+    alias = LIGAND_ALIAS_RE.search(text)
+    return alias.group("alias") if alias else None
 
 def pressure_to_bar(value: float, unit: str) -> float:
     unit = unit.lower()
@@ -100,24 +159,37 @@ def _extract_pressure_bar(text: str) -> float | None:
 
 
 def _sentence_spans(text: str) -> list[tuple[int, int, str]]:
+    """Split into sentences, refusing a boundary that only closes an abbreviation.
+
+    Offsets are computed from the boundaries themselves rather than by searching
+    for the text, so a sentence repeated verbatim in an article still gets its
+    own span.
+    """
+    segments: list[tuple[int, int]] = []
+    segment_start = 0
+    for match in SENTENCE_SPLIT_RE.finditer(text):
+        if ABBREVIATION_END_RE.search(text[segment_start:match.start()].rstrip()):
+            continue
+        segments.append((segment_start, match.start()))
+        segment_start = match.end()
+    segments.append((segment_start, len(text)))
+
     spans: list[tuple[int, int, str]] = []
-    cursor = 0
-    for part in SENTENCE_SPLIT_RE.split(text):
-        part = part.strip()
+    for start, end in segments:
+        raw = text[start:end]
+        part = raw.strip()
         if not part:
             continue
-        start = text.find(part, cursor)
-        if start < 0:
-            start = cursor
-        end = start + len(part)
-        spans.append((start, end, part))
-        cursor = end
+        offset = start + (len(raw) - len(raw.lstrip()))
+        spans.append((offset, offset + len(part), part))
     return spans
 
 
 def _candidate_confidence(values: dict[str, object], evidence: str) -> float:
     score = 0.15
-    if values.get("ee_percent") is not None:
+    # An er is enantioselectivity evidence exactly as an ee is; a window
+    # carrying either earns the same credit, and one carrying both earns it once.
+    if values.get("ee_percent") is not None or values.get("er_major") is not None:
         score += 0.25
     if values.get("yield_percent") is not None:
         score += 0.20
@@ -150,7 +222,7 @@ def extract_reaction_candidates(text: str, context_sentences: int = 2) -> list[R
 
     anchor_indices = [
         i for i, (_, _, sentence) in enumerate(spans)
-        if EE_RE.search(sentence) or YIELD_RE.search(sentence)
+        if EE_RE.search(sentence) or YIELD_RE.search(sentence) or ER_RE.search(sentence)
     ]
 
     candidates: list[ReactionCandidate] = []
@@ -167,14 +239,17 @@ def extract_reaction_candidates(text: str, context_sentences: int = 2) -> list[R
         seen_windows.add(window_key)
 
         evidence = text[start:end].strip()
+        er = _first_er(evidence)
         values = {
             "ee_percent": _first_float(EE_RE, evidence),
+            "er_major": er[0] if er else None,
+            "er_minor": er[1] if er else None,
             "yield_percent": _first_float(YIELD_RE, evidence),
             "h2_pressure_bar": _extract_pressure_bar(evidence),
             "temperature_c": _first_float(TEMP_RE, evidence),
             "reaction_time_h": _first_float(TIME_RE, evidence),
             "solvent": _first_text(SOLVENT_RE, evidence),
-            "ligand": _first_text(LIGAND_RE, evidence),
+            "ligand": _first_ligand_mention(evidence),
             "substrate_class": _first_text(SUBSTRATE_RE, evidence),
         }
 

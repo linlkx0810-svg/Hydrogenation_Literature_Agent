@@ -1,0 +1,51 @@
+{
+  "artifacts": {
+    "FE-H2-AH-0005": {
+      "MAIN": "2c1034cf477c749f1a6e09fb6137c554afa0ec51b9cf6f07ec53ad17538cb291",
+      "SI": "99aabc07bdda2fc1360d86ecf8306ebca67b010b0023b8d0795c722e672a2783"
+    },
+    "FE-H2-AH-0006": {
+      "MAIN": "600e120bf8693c7e67b59eb92b8f5f1898dea7f6a650148efcece8ba291147be",
+      "SI": "bd5cd62a0f90db2d46d1a1b6f1e9612268941a97628a748d91f2117a1f71e6df"
+    },
+    "FE-H2-AH-0011": {
+      "MAIN": "2f3642f8280a514760f2cb8479f49f68fb45edfb6b1328267dd90803c00068b0",
+      "SI": "e6dfe619ba21c5acdee2d2ba0969ca895b0770956d462f3732043cdc79204278"
+    },
+    "FE-H2-AH-0016": {
+      "MAIN": "0a9b1da316985fd21e98cd5d6fe3ad59bc9ef0c69940e2d7bc3cdc773062e69c",
+      "SI": "432be457384935a3c8463d7228477940cf2af771290ff227f8ec5bb4d8cd3203"
+    },
+    "FE-H2-AH-0017": {
+      "MAIN": "c83583b5a223183d8bf4d32bafdfd7f14031724d797333987bb130b2d39a5983",
+      "SI": "e60d6dbc24ef6ab24d359125ea5f7bf4e6b097cd68a3e4d3de3e949eb586b06b"
+    },
+    "FE-H2-AH-0022": {
+      "MAIN": "6e34b1795ba635f4ac417a3f4b274454b75da0729a07511aa709bb74c9df1300",
+      "SI": "96e70a38953df166c9556edb233bcfbb1ab8ae018c211348cff26cdc07817caf"
+    },
+    "NI-H2-AH-0007": {
+      "MAIN": "82e7ad4f60a473a0811473c088855fcbe2e80a197b7d8a6d7dde7853c3c7922b"
+    },
+    "NI-H2-AH-0025": {
+      "MAIN": "73a33770fe19864d17aa3600f17cfec2a847345959e49290f90aadf162282fb6"
+    },
+    "NI-H2-AH-0027": {
+      "MAIN": "809d17bedd05c6dc6b8ff3fceb2cd7cb5d240c815c0a66b5d38c5e060935d575"
+    },
+    "NI-H2-AH-0029": {
+      "MAIN": "241377b06ca59fe7d1f11f27f14637e9600214ede757e89043f05f9be597a3e5"
+    },
+    "NI-H2-AH-0031": {
+      "MAIN": "0b1070bad13ae8e2f086a475107e23e5e1fd29a1b12a0d41b581777139d589ad"
+    },
+    "NI-H2-AH-0032": {
+      "MAIN": "4a4a58f56e80a1f082bfafb0262222ab03435f7160b800d45d98018217803383"
+    }
+  },
+  "corpus_version": "binding-corpus-v1",
+  "extractor": "pypdf.PdfReader.extract_text joined by newline",
+  "normalization": "CRLF and CR collapsed to LF; UTF-8",
+  "papers": 12,
+  "pypdf_version": "6.20.0"
+}

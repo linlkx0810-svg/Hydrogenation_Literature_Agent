@@ -1,0 +1,140 @@
+{
+  "contract_version": "verifier-coverage-contract-v1",
+  "date": "2026-09-23",
+  "verifier_version": "evidence-verifier-v1.1",
+  "field_schema": "agent-v1-field-schema-v1",
+  "principle": "Not checked is not unsupported. Not verifiable is not incorrect. Pass-through is not verified.",
+  "coverage_modes": {
+    "FULL_EVIDENCE_CHECK": "The value is matched against the bound evidence window by the deterministic pattern that defines the quantity, including unit conversion where the source unit is explicit.",
+    "NORMALIZATION_AWARE_CHECK": "The verdict is read from the normalization record produced by prediction-normalizer-v1. The verifier does not resolve anything itself.",
+    "LITERAL_EVIDENCE_CHECK": "The value is matched literally against the bound evidence window after Unicode, whitespace and punctuation normalization, with word-boundary awareness. No fuzzy matching, edit distance, token overlap or synonym guessing.",
+    "EXPLICIT_STEREO_CHECK": "Only stereochemical descriptors stated explicitly in the evidence are used. Configuration is never inferred from ee, er, catalyst sense, structure drawings or literature precedent.",
+    "NOT_CHECKED_V1": "No verifier exists for this field in v1. The raw answer passes through unchecked and is never called verified."
+  },
+  "statuses": {
+    "supported": "the bound evidence directly supports the value",
+    "partial": "the evidence supports part of the value",
+    "unsupported": "the evidence contradicts the value, or evidence integrity failed",
+    "unresolved": "an identity was mentioned but could not be resolved from the source",
+    "ambiguous": "the source supports more than one mutually exclusive reading",
+    "not_checked_v1": "the field has no verifier in this contract",
+    "not_verifiable_v1": "the field has a verifier, but this case's evidence representation does not allow a reliable verdict"
+  },
+  "final_actions": ["retain", "suppress", "flag_review", "pass_through_unchecked"],
+  "fields": [
+    {
+      "field": "reaction",
+      "coverage_mode": "NOT_CHECKED_V1",
+      "checked_by_verifier": false,
+      "can_block": false,
+      "can_accept": false,
+      "implementation": null,
+      "limitations": "reaction is a compound semantic field (class, transformation, substrate-to-product relationship, chemistry category) and there is no reaction canonicalizer in v1. A substring test against the evidence would not be scientific verification, so none is performed."
+    },
+    {
+      "field": "catalyst",
+      "coverage_mode": "LITERAL_EVIDENCE_CHECK",
+      "checked_by_verifier": true,
+      "can_block": false,
+      "can_accept": true,
+      "implementation": "modules/field_verifiers.py::verify_catalyst",
+      "limitations": "Only a literal mention in the bound evidence can support a catalyst. A metal name alone never supports a full catalyst identity, a metal plus ligand is never assembled into one, a precatalyst is never equated with the active catalyst, and a catalyst number is never resolved across papers. Without a literal match the verdict is not_verifiable_v1, never unsupported."
+    },
+    {
+      "field": "ligand",
+      "coverage_mode": "NORMALIZATION_AWARE_CHECK",
+      "checked_by_verifier": true,
+      "can_block": true,
+      "can_accept": true,
+      "implementation": "modules/extraction_verifier.py, reading prediction-normalizer-v1",
+      "limitations": "The verdict mirrors the normalization status: resolved becomes supported, and unresolved or ambiguous are passed through as they are. Without a normalization record the ligand is unresolved with reason normalization_missing."
+    },
+    {
+      "field": "substrate",
+      "coverage_mode": "LITERAL_EVIDENCE_CHECK",
+      "checked_by_verifier": true,
+      "can_block": true,
+      "can_accept": true,
+      "implementation": "modules/extraction_verifier.py::_text_supported with the substrate-class vocabulary",
+      "limitations": "The check recognizes the controlled substrate-class vocabulary of the candidate builder. A named compound outside that vocabulary is reported unsupported by the current implementation even when the source names it, so substrate verdicts are conservative on compound-level answers."
+    },
+    {
+      "field": "product",
+      "coverage_mode": "LITERAL_EVIDENCE_CHECK",
+      "checked_by_verifier": true,
+      "can_block": false,
+      "can_accept": true,
+      "implementation": "modules/field_verifiers.py::verify_product",
+      "limitations": "Only an explicit textual product mention or an explicit product label in the evidence can support a product. A product expressed only as a drawn structure in a scheme is not verifiable from text, and the verdict is not_verifiable_v1, never unsupported."
+    },
+    {
+      "field": "h2_pressure",
+      "coverage_mode": "FULL_EVIDENCE_CHECK",
+      "checked_by_verifier": true,
+      "can_block": true,
+      "can_accept": true,
+      "implementation": "modules/extraction_verifier.py::_pressure_supported",
+      "limitations": "Matches a numeric pressure in the evidence, converting bar, atm, psi, MPa and kPa when the unit is explicit. A pressure stated only in a scheme image is not visible to a text-only check."
+    },
+    {
+      "field": "temperature",
+      "coverage_mode": "FULL_EVIDENCE_CHECK",
+      "checked_by_verifier": true,
+      "can_block": true,
+      "can_accept": true,
+      "implementation": "modules/extraction_verifier.py::_numeric_supported with TEMP_RE",
+      "limitations": "Numeric degrees Celsius only. A non-numeric report such as room temperature is not matched and is not coerced."
+    },
+    {
+      "field": "reaction_time",
+      "coverage_mode": "FULL_EVIDENCE_CHECK",
+      "checked_by_verifier": true,
+      "can_block": true,
+      "can_accept": true,
+      "implementation": "modules/extraction_verifier.py::_numeric_supported with TIME_RE",
+      "limitations": "Hours only. A time stated in minutes in the source is not converted by the check."
+    },
+    {
+      "field": "solvent",
+      "coverage_mode": "LITERAL_EVIDENCE_CHECK",
+      "checked_by_verifier": true,
+      "can_block": true,
+      "can_accept": true,
+      "implementation": "modules/extraction_verifier.py::_text_supported with the solvent vocabulary",
+      "limitations": "Recognizes the controlled solvent vocabulary of the candidate builder. A solvent outside that vocabulary, or a mixture written as a ratio, is reported unsupported by the current implementation."
+    },
+    {
+      "field": "yield",
+      "coverage_mode": "FULL_EVIDENCE_CHECK",
+      "checked_by_verifier": true,
+      "can_block": true,
+      "can_accept": true,
+      "implementation": "modules/extraction_verifier.py::_numeric_supported with YIELD_RE",
+      "limitations": "Matches a percentage written as yield. Conversion reported instead of yield is not matched."
+    },
+    {
+      "field": "ee_or_er",
+      "coverage_mode": "FULL_EVIDENCE_CHECK",
+      "checked_by_verifier": true,
+      "can_block": true,
+      "can_accept": true,
+      "implementation": "modules/extraction_verifier.py::_numeric_supported with EE_RE",
+      "limitations": "Only an ee in percent is matched. An er ratio is not converted and is reported not_verifiable_v1 by the chain runner rather than being checked as an ee."
+    },
+    {
+      "field": "stereochemical_outcome",
+      "coverage_mode": "EXPLICIT_STEREO_CHECK",
+      "checked_by_verifier": true,
+      "can_block": true,
+      "can_accept": true,
+      "implementation": "modules/field_verifiers.py::verify_stereochemical_outcome",
+      "limitations": "Only explicit descriptors count: (R), (S), R- or S-configured, R or S configuration, racemic, and an explicitly named major enantiomer. Matching is word-boundary aware so a stray letter never counts. When the evidence reports only an ee or er value the verdict is not_verifiable_v1. unsupported is used only when the evidence states a different configuration explicitly."
+    }
+  ],
+  "coverage_summary": {
+    "fields_total": 12,
+    "fields_checked": 11,
+    "fields_not_checked": 1,
+    "note": "Field counts are a summary only. The reported denominator is verifier_coverage_rate over candidate x field units, not a fields fraction."
+  }
+}

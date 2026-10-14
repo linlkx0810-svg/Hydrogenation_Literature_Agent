@@ -1,0 +1,128 @@
+{
+  "artifact": "agent-v1-system-freeze-candidate",
+  "artifact_kind": "NOT_A_BLIND_EVALUATION_FREEZE",
+  "date": "2026-09-24",
+  "git_branch": "agent-v1-ligand-verifier",
+  "git_commit": "cb48b2d439b272b8c1740b0d1de197a01e3bc98f",
+  "scope_note": "Developer-side system definition only. It binds no blind cohort, authorizes no run, and must not be cited as an evaluation freeze. prospective-blind-v3 stands at 8/12 and remains custodian-sealed.",
+  "readiness": {
+    "execution_graph_unique": {
+      "state": "YES",
+      "detail": "The whole chain runs offline: source -> evidence builder -> Raw LLM v2 -> frozen raw -> normalization -> evidence verifier -> scorer. agent.py exposes extract-raw, run-chain and score; CI runs all of them and asserts the raw artifact is unchanged afterwards."
+    },
+    "raw_llm_definition_unique": {
+      "state": "YES",
+      "detail": "Raw is llm-extractor-v2 output, validated against raw-extraction-schema-v2 and frozen by tools/freeze_raw_predictions.py before anything downstream reads it. llm-extractor-v1 remains on the branch as LEGACY_NOT_USED."
+    },
+    "verifier_unique": {
+      "state": "YES",
+      "detail": "evidence-verifier-v1.1 is the only verifier, it does not normalize, and its coverage is frozen in VERIFIER_COVERAGE_V1 with one mode per field. reaction stays NOT_CHECKED_V1 by policy."
+    },
+    "field_schema_frozen": {
+      "state": "YES",
+      "detail": "benchmark/FIELD_SCHEMA_V1.json, 12 atomic fields, no aggregate conditions field, selectivity option B."
+    },
+    "scoring_contract_frozen": {
+      "state": "YES",
+      "detail": "agent-v1-scorer-v2 reports four separate accounts with explicit denominators and no single verified accuracy."
+    },
+    "prompt_frozen": {
+      "state": "YES_CANDIDATE",
+      "detail": "llm-extractor-prompt-v2 covers the 12 fields and the four abstention reasons; it is frozen as a candidate and any change creates llm-extractor-v3."
+    },
+    "model_frozen": {
+      "state": "PARTIAL",
+      "detail": "Model gpt-5.6-sol, Responses API, strict JSON, reasoning effort medium, temperature and top_p null, seed unsupported. The OpenAI SDK version is still unresolved and no live call has been made."
+    },
+    "runtime_captured": {
+      "state": "PARTIAL",
+      "detail": "requirements-benchmark-lock.txt pins the deterministic stack. The openai package is absent, and one interpreter version must be chosen for the benchmark environment."
+    },
+    "cli_runnable": {
+      "state": "YES",
+      "detail": "agent.py extract-raw runs the chain as a dry run (request envelopes only) or as an offline replay; both are exercised in CI together with the freeze tool."
+    },
+    "regression_tests_pass": {
+      "state": "YES",
+      "detail": "Local suite green on synthetic fixtures and manifest invariants; no development-set or blind data is executed in CI."
+    },
+    "verifier_coverage_contract": {
+      "state": "VERIFIER_COVERAGE_CONTRACT_FROZEN",
+      "detail": "11 of 12 fields have a verifier; reaction is explicitly excluded. catalyst and product accept only literal evidence and can never block; stereochemical_outcome reads explicit descriptors only. Coverage is reported as a rate over candidate x field units."
+    },
+    "development_gold": {
+      "state": "PARTIAL",
+      "detail": "27 answered, 11 source-reviewed not_reported, 106 still open and queued for human review. The freeze tool refuses to mark the Gold frozen while any slot is open."
+    },
+    "reaction_taxonomy": {
+      "state": "YES",
+      "detail": "REACTION_TAXONOMY_V1 reuses the frozen Stage 5b reaction_type and substrate_class vocabularies; 24 closed labels; SCHEMA_DEFINITION_GAP(reaction) closed by schema amendment 1."
+    },
+    "candidate_binding": {
+      "state": "PARTIAL",
+      "detail": "1 BOUND_EXACT, 3 AMBIGUOUS_BINDING, 8 UNREPRESENTABLE_V1. 11 of the 12 root causes are INSUFFICIENT_ADJUDICATED_VALUES, so binding is currently blocked by Gold completeness rather than by the evidence builder."
+    }
+  },
+  "blocking_gaps": [
+    "106 of 144 development Gold slots are still open and queued for human review; Claude adjudication is provisional and is never labelled human-confirmed",
+    "candidate binding: 1 of 12 cases binds exactly; the rest wait on Gold adjudication (11) or on a builder limitation (0 confirmed so far)",
+    "OpenAI SDK exact version is not frozen",
+    "the benchmark Python runtime is not pinned to one interpreter version",
+    "no live provider call has been made against gpt-5.6-sol",
+    "chemical identity comparators are string-level only"
+  ],
+  "validation_data_used": [
+    "examples/benchmark_synthetic.jsonl",
+    "examples/raw_chain_sample.txt with examples/raw_llm_replay_example.jsonl (synthetic replay, no model call)",
+    "benchmark manifests committed in this repository"
+  ],
+  "validation_data_not_used": [
+    "prospective-blind-v3 identities, manifests and sources",
+    "any blind Gold or prediction"
+  ],
+  "AGENT_V1_SYSTEM_FREEZE_READY": "NO",
+  "phase_a_legacy_port": {
+    "status": "LEGACY_PORT_VALIDATED",
+    "byte_identical": true,
+    "modules": [
+      "modules/llm_extractor.py",
+      "modules/openai_responses_provider.py"
+    ],
+    "doc": "docs/LLM_EXTRACTOR_LINEAGE_V1_TO_V2.md"
+  },
+  "artifact_chain": {
+    "documented_in": "docs/AGENT_V1_ARTIFACT_CONTRACTS.md",
+    "artifacts": [
+      "raw_predictions.jsonl",
+      "raw_predictions.freeze.json",
+      "normalized_predictions.jsonl",
+      "verified_predictions.jsonl",
+      "chain_manifest.json",
+      "score_report.json"
+    ],
+    "raw_immutable_after_freeze": true,
+    "join_key": "candidate_id",
+    "fail_closed": true
+  },
+  "terminology": {
+    "rule_baseline_tool": "tools/run_trust_benchmark.py reports rule_baseline, not raw",
+    "formal_raw_llm": "llm-extractor-v2 only",
+    "historical_files_rewritten": false
+  },
+  "development_gold": {
+    "artifact": "benchmark/development_gold/development_gold_field_schema_v1.jsonl",
+    "status": "INCOMPLETE_NOT_FROZEN",
+    "development_only": true,
+    "blind_eligible": false,
+    "lineage": "legacy Gold v1 (8 fields) + source adjudication -> development Gold FIELD_SCHEMA_V1",
+    "counts": {
+      "cases": 12,
+      "field_slot_count": 144,
+      "answered": 27,
+      "not_reported": 11,
+      "unresolved_reference": 0,
+      "needs_source_review": 106,
+      "scored_slots": 38
+    }
+  }
+}
