@@ -3,19 +3,19 @@
   "hypothetical": false,
   "note": "Batch 01 has 19 recorded APPROVE decisions already promoted to Gold. Current binding is the audited post-promotion state; this is not an outstanding what-if.",
   "current": {
-    "AMBIGUOUS_BINDING": 2,
-    "UNREPRESENTABLE_V1": 8,
-    "BOUND_EXACT": 2
+    "UNREPRESENTABLE_V1": 9,
+    "BOUND_EXACT": 2,
+    "AMBIGUOUS_BINDING": 1
   },
   "projected": {
-    "AMBIGUOUS_BINDING": 2,
-    "UNREPRESENTABLE_V1": 8,
-    "BOUND_EXACT": 2
+    "UNREPRESENTABLE_V1": 9,
+    "BOUND_EXACT": 2,
+    "AMBIGUOUS_BINDING": 1
   },
   "changed_cases": [],
   "projected_exact": 2,
-  "projected_ambiguous": 2,
-  "projected_unrepresentable": 8,
+  "projected_ambiguous": 1,
+  "projected_unrepresentable": 9,
   "decisions_recorded": 19,
   "pending_decisions": 0,
   "scope": "POST_PROMOTION_ACTUAL"

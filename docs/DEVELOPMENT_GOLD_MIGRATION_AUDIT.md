@@ -86,3 +86,26 @@ Three `stereochemical_outcome` slots are `not_reported` because the reviewed tar
 | `BINDING_PENDING_ADJUDICATION` | 8 |
 
 A binding is recorded only when the adjudicated Gold values pin exactly one candidate chunk; "the first candidate" is never chosen. The three failures are a genuine pipeline finding: for those cases the deterministic evidence builder does not surface a chunk reproducing the adjudicated target, which is an extractor problem to fix, not a Gold problem to paper over.
+
+## 8. Reproducing the binding corpus
+
+The binding audit reads one `.txt` per source artifact. That corpus used to be built outside the repository and was never recorded, so `candidate_binding_v1.csv` could not be regenerated: rerunning the audit against a differently extracted corpus moved cases between binding statuses with nothing to flag it.
+
+The corpus is now a derived artifact with a stated input. The paper PDFs are not redistributed here and the extracted text is not committed; what is committed is `benchmark/development_gold/binding_corpus_manifest.json`, holding the sha256 of every text artifact plus the extractor version that produced it.
+
+To rebuild and re-audit:
+
+```bash
+python tools/build_binding_corpus.py \
+  --pdf-root <dir with main_articles/ and supporting_information/> \
+  --out-dir <corpus dir>
+
+python tools/audit_candidate_binding.py \
+  --gold benchmark/development_gold/development_gold_field_schema_v1.jsonl \
+  --source-dir <corpus dir> \
+  --out benchmark/development_gold/candidate_binding_v1.csv
+```
+
+The audit verifies the corpus against the manifest first and refuses to run on a corpus that does not match. `--allow-unattested-corpus` overrides that and marks the result as not reproducible.
+
+Two limits are worth stating. The manifest hashes are tied to the recorded `pypdf` version, so a different pypdf may produce a different corpus and fail verification; the version is in the manifest for that reason. And CI has no PDFs, so it cannot rebuild the corpus at all — `tests/test_binding_corpus_contract.py` instead checks that the committed binding result still agrees with the committed Gold about which adjudicated values were usable, which is what catches a binding CSV left behind by a Gold edit.

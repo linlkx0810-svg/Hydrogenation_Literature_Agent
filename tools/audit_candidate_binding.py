@@ -10,6 +10,12 @@ zip. Everything else gets a fixed root-cause code.
 Source scope: the builder runs over each source artifact of the case separately
 (main article and SI are distinct artifacts), because a frozen target anchor may
 live in either.
+
+Corpus: a binding result only means something next to the text it was computed
+over, so the audit verifies the corpus against
+`benchmark/development_gold/binding_corpus_manifest.json` before it runs and
+refuses a corpus that does not match. Build the corpus with
+`tools/build_binding_corpus.py`.
 """
 from __future__ import annotations
 
@@ -25,6 +31,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from modules.reaction_candidate_extraction import extract_reaction_candidates  # noqa: E402
+from tools.build_binding_corpus import verify as verify_corpus  # noqa: E402
 
 AUDIT_VERSION = "development-candidate-binding-v2"
 
@@ -158,16 +165,19 @@ def audit(gold_records: list[dict], source_dir: Path) -> list[dict]:
             rows.append(_row(case, paper_id, anchor, candidate.candidate_id,
                              f"{paper_id}:{role}:{candidate.evidence_start}-{candidate.evidence_end}",
                              "BOUND_EXACT", "gold_value_pin", "",
-                             f"{hits} adjudicated values reproduced in one chunk of the {role} artifact."))
+                             f"{hits} adjudicated values reproduced in one chunk of the {role} artifact."
+                             + unusable_note))
         elif len(top) > 1:
             rows.append(_row(case, paper_id, anchor, "", "", "AMBIGUOUS_BINDING",
                              "gold_value_pin", "MULTIPLE_CANDIDATES_AMBIGUOUS",
-                             f"{len(top)} chunks reproduce the adjudicated values equally well."))
+                             f"{len(top)} chunks reproduce the adjudicated values equally well."
+                             + unusable_note))
         else:
             cause = _diagnose(artifacts, values)
             rows.append(_row(case, paper_id, anchor, "", "", "UNREPRESENTABLE_V1",
                              "gold_value_pin", cause,
-                             f"No chunk reproduces the adjudicated values across {len(artifacts)} artifact(s)."))
+                             f"No chunk reproduces the adjudicated values across {len(artifacts)} artifact(s)."
+                             + unusable_note))
     return rows
 
 
@@ -208,10 +218,39 @@ def main() -> int:
     parser.add_argument("--gold", required=True)
     parser.add_argument("--source-dir", required=True)
     parser.add_argument(
+        "--corpus-manifest",
+        default=str(PROJECT_ROOT / "benchmark/development_gold/binding_corpus_manifest.json"),
+        help="attested corpus hashes; the audit refuses a corpus that does not match",
+    )
+    parser.add_argument(
+        "--allow-unattested-corpus",
+        action="store_true",
+        help="run against a corpus with no manifest (the result is not reproducible)",
+    )
+    parser.add_argument(
         "--out",
         default=str(PROJECT_ROOT / "benchmark/development_gold/candidate_binding_v1.csv"),
     )
     args = parser.parse_args()
+
+    # A binding result is only meaningful next to the text it was computed over.
+    # Running against a differently extracted corpus moves cases between binding
+    # statuses, which is how the committed CSV drifted from its own inputs.
+    manifest_path = Path(args.corpus_manifest)
+    if args.allow_unattested_corpus:
+        print(json.dumps({"corpus": "UNATTESTED", "reproducible": False}), file=sys.stderr)
+    elif not manifest_path.exists():
+        raise SystemExit(
+            f"no corpus manifest at {manifest_path}; build one with tools/build_binding_corpus.py "
+            f"or pass --allow-unattested-corpus"
+        )
+    else:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        problems = verify_corpus(manifest, Path(args.source_dir))
+        if problems:
+            raise SystemExit(
+                "corpus does not match its manifest:\n  " + "\n  ".join(problems)
+            )
 
     gold = [
         json.loads(line)
