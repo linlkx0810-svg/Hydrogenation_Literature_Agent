@@ -109,3 +109,19 @@ python tools/audit_candidate_binding.py \
 The audit verifies the corpus against the manifest first and refuses to run on a corpus that does not match. `--allow-unattested-corpus` overrides that and marks the result as not reproducible.
 
 Two limits are worth stating. The manifest hashes are tied to the recorded `pypdf` version, so a different pypdf may produce a different corpus and fail verification; the version is in the manifest for that reason. And CI has no PDFs, so it cannot rebuild the corpus at all — `tests/test_binding_corpus_contract.py` instead checks that the committed binding result still agrees with the committed Gold about which adjudicated values were usable, which is what catches a binding CSV left behind by a Gold edit.
+
+## 9. Enantiomer ratios in the candidate builder
+
+The rule baseline captured only `ee_percent`, so a paper reporting an enantiomer ratio gave the builder nothing to match. `modules/reaction_candidate_extraction.py` now also reads `er_major`/`er_minor`, and an er anchors a candidate window the way an ee or a yield does.
+
+The ratio is read only where the source labels it one (`e.r.`, `er`, `enantiomer ratio`). A bare `d:d` is far too common here — eluent gradients, solvent mixtures, S:C:B loadings, dr values — and none of those is a selectivity. The two forms are never converted into each other, in the builder or in the binding comparison: an er matches an er on both terms, an ee matches an ee, and neither satisfies the other's pin.
+
+This changed two bindings, both for the better.
+
+`DEV-001` moves from `UNREPRESENTABLE_V1` to `AMBIGUOUS_BINDING`. Its only adjudicated value is the er `65:35`, which the builder now captures from the SI; one value still cannot pin a chunk uniquely, so the case is ambiguous rather than unreachable. Note that its anchor sentence reports `>99% GC yield`, which matches no yield pattern — without er support nothing anchored that window at all.
+
+`DEV-003` moves from `BOUND_EXACT` to `AMBIGUOUS_BINDING`, and that is a correction. The previous binding pinned the chunk at span 6246-6432, the Scheme 2 optimization sentence reporting 99% yield and 76:24 er — not the frozen target `TABLE3_ENTRY15_BENZOXAZINONE_1A`, whose Gold is 88% yield and 91:9 er. It matched on pressure and temperature alone, two table-wide conditions, and looked unique only because the builder could not read `91:9 er` and so scored the correct chunk lower. With the ratio readable, the correct chunk reaches the same score and the tie is reported honestly. A 2-of-6 match was never a confident binding.
+
+One consequence worth recording: `candidate_id` is positional (`rxn-NNNN`), so adding an anchor renumbers later candidates. The stable identifier is `source_chunk_id`, which carries the artifact and the character span.
+
+A known gap is pinned by an `xfail` in `tests/test_reaction_candidate_extraction.py`: the sentence splitter reads the period in `e.r.` as a sentence end, so a window opening with the abbreviation is cut before its ratio. Value-first forms, which is how this literature overwhelmingly writes it, are unaffected.

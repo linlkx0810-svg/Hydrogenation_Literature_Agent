@@ -64,9 +64,9 @@ CANDIDATE_ATTR = {
 def _pin_values(record: dict) -> tuple[dict, list[str]]:
     """Gold values usable as a pin, plus the adjudicated ones the builder cannot use.
 
-    An er is adjudicated Gold, but the rule-based candidate builder only captures
-    an ee, so there is nothing to compare it against. It is reported as a builder
-    gap rather than silently converted into an ee or counted as a missing value.
+    A typed enantioselectivity is carried through as its typed value, because the
+    builder now captures an ee and an er in the form the source reports. Any other
+    typed kind is reported as a builder gap rather than converted or dropped.
     """
     out = {}
     unusable = []
@@ -76,10 +76,12 @@ def _pin_values(record: dict) -> tuple[dict, list[str]]:
             continue
         value = field.get("value")
         if isinstance(value, dict):
-            if value.get("kind") != "ee_percent":
-                unusable.append(f"{name} ({value.get('kind')})")
+            kind = value.get("kind")
+            if kind == "ee_percent":
+                value = value.get("value")
+            elif kind != "er_ratio":
+                unusable.append(f"{name} ({kind})")
                 continue
-            value = value.get("value")
         out[name] = value
     return out, unusable
 
@@ -87,6 +89,20 @@ def _pin_values(record: dict) -> tuple[dict, list[str]]:
 def _match_count(candidate, values: dict) -> int:
     hits = 0
     for name, expected in values.items():
+        if isinstance(expected, dict):
+            # Only an er reaches here, and it matches only another er: the two
+            # terms of the ratio, never an ee standing in for it.
+            if expected.get("kind") != "er_ratio":
+                continue
+            major = getattr(candidate, "er_major", None)
+            minor = getattr(candidate, "er_minor", None)
+            if major is None or minor is None:
+                continue
+            hits += int(
+                abs(float(expected["major"]) - float(major)) < 1e-4
+                and abs(float(expected["minor"]) - float(minor)) < 1e-4
+            )
+            continue
         actual = getattr(candidate, CANDIDATE_ATTR[name], None)
         if actual is None:
             continue

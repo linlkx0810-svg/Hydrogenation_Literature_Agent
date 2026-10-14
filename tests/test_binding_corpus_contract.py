@@ -106,14 +106,37 @@ def test_a_bound_case_names_the_chunk_it_bound_to():
             assert not row["candidate_id"], f"{case_id} is unbound but names a candidate"
 
 
-def test_an_er_is_never_matched_against_an_ee_pin():
-    """The builder captures an ee; an er is reported as a gap, never converted."""
+def test_an_er_pins_as_a_ratio_and_never_against_an_ee():
+    """The builder captures both forms, and the two never match each other."""
     for record in GOLD:
         values, unusable = _pin_values(record)
         ee = record["fields"]["ee_or_er"]
-        if ee["state"] == "answered" and ee["value"]["kind"] == "er_ratio":
-            assert "ee_or_er" not in values
-            assert any("er_ratio" in entry for entry in unusable)
+        if ee["state"] != "answered":
+            continue
+        if ee["value"]["kind"] == "er_ratio":
+            assert values["ee_or_er"] == ee["value"], "an er pins as its own ratio"
+            assert not any("er_ratio" in entry for entry in unusable)
+        else:
+            assert isinstance(values["ee_or_er"], (int, float))
+
+
+def test_matching_keeps_the_two_kinds_apart():
+    from types import SimpleNamespace
+
+    from tools.audit_candidate_binding import _match_count
+
+    er_gold = {"ee_or_er": {"kind": "er_ratio", "major": 65.0, "minor": 35.0}}
+    ee_only = SimpleNamespace(ee_percent=30.0, er_major=None, er_minor=None)
+    right_er = SimpleNamespace(ee_percent=None, er_major=65.0, er_minor=35.0)
+    wrong_er = SimpleNamespace(ee_percent=None, er_major=70.0, er_minor=30.0)
+
+    assert _match_count(ee_only, er_gold) == 0, "a derived ee must not satisfy an er pin"
+    assert _match_count(right_er, er_gold) == 1
+    assert _match_count(wrong_er, er_gold) == 0
+
+    ee_gold = {"ee_or_er": 30.0}
+    assert _match_count(right_er, ee_gold) == 0, "a ratio must not satisfy an ee pin"
+    assert _match_count(ee_only, ee_gold) == 1
 
 
 def test_pin_fields_are_a_closed_set():
